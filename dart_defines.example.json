@@ -1,0 +1,6 @@
+{
+  "SHAYA_SUPABASE_URL": "https://YOUR_PROJECT_REF.supabase.co",
+  "SHAYA_SUPABASE_ANON_KEY": "YOUR_SUPABASE_ANON_KEY",
+  "SHAYA_OAUTH_REDIRECT_URL": "shayaai://auth-callback",
+  "SHAYA_PASSWORD_RESET_REDIRECT_URL": "shayaai://auth-callback/reset"
+}
