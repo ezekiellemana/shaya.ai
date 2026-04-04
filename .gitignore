@@ -47,5 +47,3 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyYmZvYmFuanRodG92dmVpaHpnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTMxMjUwNCwiZXhwIjoyMDkwODg4NTA0fQ.PxqMZjex4jz2esN8hULbzP1NExYS7e9igrhd0qeCDPA

@@ -16,6 +16,19 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>shaya_ai</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.shayaai.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>shayaai</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
