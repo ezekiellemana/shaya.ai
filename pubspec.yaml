@@ -1,7 +1,7 @@
 name: shaya_ai
 description: Shaya AI production Flutter app aligned to the SRS v4.0.
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
   sdk: ^3.11.3

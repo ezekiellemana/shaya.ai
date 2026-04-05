@@ -39,11 +39,14 @@ These values are used by the Flutter app:
 - `SHAYA_SUPABASE_ANON_KEY`
 - `SHAYA_OAUTH_REDIRECT_URL`
 - `SHAYA_PASSWORD_RESET_REDIRECT_URL`
+- `SHAYA_ENABLE_GOOGLE_AUTH`
 
 Use these redirect values unless you intentionally change the app deep links:
 
 - `shayaai://auth-callback`
 - `shayaai://auth-callback/reset`
+
+Set `SHAYA_ENABLE_GOOGLE_AUTH` to `"false"` by default. Change it to `"true"` only after you finish Google provider setup in Supabase, otherwise the app will hide the Google sign-in button on purpose.
 
 ### `supabase/.env.local`
 
@@ -78,6 +81,15 @@ In Supabase Dashboard:
    - `shayaai://auth-callback`
    - `shayaai://auth-callback/reset`
 3. Keep email confirmations enabled for production-style testing.
+
+### 4.2.1 Optional: enable Google sign-in later
+
+Only do this when you are ready to test Google auth.
+
+1. Configure the Google provider in `Supabase Dashboard -> Authentication -> Providers`.
+2. Confirm your mobile redirect URL still matches `shayaai://auth-callback`.
+3. Set `SHAYA_ENABLE_GOOGLE_AUTH` to `"true"` in `dart_defines.json`.
+4. Restart the Flutter app fully.
 
 ### 4.3 Link this repo to the hosted project
 

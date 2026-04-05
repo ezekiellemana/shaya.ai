@@ -85,6 +85,7 @@ if (Test-Path $dartDefinesPath) {
   Write-Status -Label "Anon key" -Ok (Test-RequiredValue -Value $dartDefines.SHAYA_SUPABASE_ANON_KEY -Placeholder "YOUR_SUPABASE_ANON_KEY") -Message "Set SHAYA_SUPABASE_ANON_KEY."
   Write-Status -Label "OAuth redirect" -Ok (-not [string]::IsNullOrWhiteSpace($dartDefines.SHAYA_OAUTH_REDIRECT_URL)) -Message "Set SHAYA_OAUTH_REDIRECT_URL."
   Write-Status -Label "Reset redirect" -Ok (-not [string]::IsNullOrWhiteSpace($dartDefines.SHAYA_PASSWORD_RESET_REDIRECT_URL)) -Message "Set SHAYA_PASSWORD_RESET_REDIRECT_URL."
+  Write-Status -Label "Google auth toggle" -Ok (($dartDefines.SHAYA_ENABLE_GOOGLE_AUTH -eq "true") -or ($dartDefines.SHAYA_ENABLE_GOOGLE_AUTH -eq $true) -or [string]::IsNullOrWhiteSpace([string]$dartDefines.SHAYA_ENABLE_GOOGLE_AUTH)) -Prefix "[LATER]" -Message "Set SHAYA_ENABLE_GOOGLE_AUTH=true only after the Google provider is configured in Supabase."
 } else {
   Write-Status -Label "dart_defines.json" -Ok $false -Message "Copy dart_defines.example.json to dart_defines.json and fill it in."
 }

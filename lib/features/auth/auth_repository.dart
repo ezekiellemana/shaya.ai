@@ -41,6 +41,11 @@ class AuthRepository {
   }
 
   Future<void> signInWithGoogle() {
+    if (!_config.isGoogleAuthEnabled) {
+      throw AppException.configuration(
+        'Google Sign-In is not enabled for this build yet.',
+      );
+    }
     return _clientOrThrow.auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: _config.oauthRedirectUrl.isEmpty

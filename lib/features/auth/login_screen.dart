@@ -28,6 +28,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(appSessionControllerProvider);
+    final appConfig = ref.watch(appConfigProvider);
     return ShayaScreenScaffold(
       title: 'Welcome back',
       subtitle: 'Sign in to generate songs, videos, and lyrics.',
@@ -78,12 +79,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             isBusy: session.isBusy,
             onPressed: _submit,
           ),
-          const SizedBox(height: 12),
-          SecondaryOutlineButton(
-            label: 'Continue with Google',
-            icon: Icons.g_mobiledata_rounded,
-            onPressed: _googleSignIn,
-          ),
+          if (appConfig.isGoogleAuthEnabled) ...[
+            const SizedBox(height: 12),
+            SecondaryOutlineButton(
+              label: 'Continue with Google',
+              icon: Icons.g_mobiledata_rounded,
+              onPressed: _googleSignIn,
+            ),
+          ],
           const SizedBox(height: 18),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
