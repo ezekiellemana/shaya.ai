@@ -126,10 +126,20 @@ class AppSessionController extends ChangeNotifier {
   Future<void> signOut() async {
     await _runBusy(() async {
       await _authRepository.signOut();
-      await _secureStore.clearSessionArtifacts();
-      await _hiveCache.clearLibraryCache();
-      _session = null;
-      notifyListeners();
+      await _clearLocalSession();
+    });
+  }
+
+  Future<void> deleteAccount({
+    required String confirmationText,
+    String? password,
+  }) async {
+    await _runBusy(() async {
+      await _profileRepository.deleteAccount(
+        confirmationText: confirmationText,
+        password: password,
+      );
+      await _clearLocalSession();
     });
   }
 
@@ -156,6 +166,14 @@ class AppSessionController extends ChangeNotifier {
       _isBusy = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _clearLocalSession() async {
+    await _secureStore.clearSessionArtifacts();
+    await _hiveCache.clearLibraryCache();
+    _pendingVerificationEmail = null;
+    _session = null;
+    notifyListeners();
   }
 
   @override

@@ -1,16 +1,29 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shaya_ai/core/providers.dart';
+import 'package:shaya_ai/core/theme.dart';
+import 'package:shaya_ai/shared/models/user_profile.dart';
 import 'package:shaya_ai/shared/widgets/quota_bar.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isUpdatingAvatar = false;
+  bool _isSavingName = false;
+
+  @override
+  Widget build(BuildContext context) {
     final profileAsync = ref.watch(currentUserProfileProvider);
     final statsAsync = ref.watch(currentProfileStatsProvider);
     final quotaAsync = ref.watch(currentQuotaProvider);
@@ -30,21 +43,14 @@ class ProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF7B2FBE), Color(0xFFE040FB)],
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.person_rounded,
-                      color: Colors.white,
-                      size: 36,
-                    ),
+                  _ProfileAvatar(
+                    profile: profile,
+                    busy: _isUpdatingAvatar,
+                    onTap: _isUpdatingAvatar
+                        ? null
+                        : () => _pickAvatar(profile),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -57,10 +63,42 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 6),
                         Text('Plan: ${profile.subscriptionTier.label}'),
-                        TextButton(
-                          onPressed: () =>
-                              _renameProfile(context, ref, profile.displayName),
-                          child: const Text('Edit name'),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            TextButton.icon(
+                              onPressed: _isSavingName
+                                  ? null
+                                  : () => _renameProfile(profile.displayName),
+                              icon: _isSavingName
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.edit_rounded),
+                              label: const Text('Edit name'),
+                            ),
+                            TextButton.icon(
+                              onPressed: _isUpdatingAvatar
+                                  ? null
+                                  : () => _pickAvatar(profile),
+                              icon: _isUpdatingAvatar
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.photo_library_rounded),
+                              label: const Text('Change photo'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -124,11 +162,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _renameProfile(
-    BuildContext context,
-    WidgetRef ref,
-    String currentName,
-  ) async {
+  Future<void> _renameProfile(String currentName) async {
     final controller = TextEditingController(text: currentName);
     final name = await showDialog<String>(
       context: context,
@@ -151,8 +185,145 @@ class ProfileScreen extends ConsumerWidget {
     if (name == null || name.trim().isEmpty) {
       return;
     }
-    await ref.read(profileRepositoryProvider).updateDisplayName(name.trim());
-    ref.invalidate(currentUserProfileProvider);
+
+    setState(() => _isSavingName = true);
+    try {
+      await ref.read(profileRepositoryProvider).updateDisplayName(name.trim());
+      ref.invalidate(currentUserProfileProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Name updated.')));
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingName = false);
+      }
+    }
+  }
+
+  Future<void> _pickAvatar(UserProfile profile) async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+      maxWidth: 1600,
+    );
+    if (image == null || !mounted) {
+      return;
+    }
+
+    setState(() => _isUpdatingAvatar = true);
+    try {
+      await ref.read(profileRepositoryProvider).uploadAvatar(image);
+      ref.invalidate(currentUserProfileProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${profile.displayName} photo updated.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingAvatar = false);
+      }
+    }
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.profile,
+    required this.busy,
+    required this.onTap,
+  });
+
+  final UserProfile profile;
+  final bool busy;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onTap,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: profile.photoUrl == null
+                    ? const LinearGradient(
+                        colors: [Color(0xFF7B2FBE), Color(0xFFE040FB)],
+                      )
+                    : null,
+                color: profile.photoUrl == null
+                    ? null
+                    : Colors.white.withValues(alpha: 0.06),
+                border: Border.all(color: kPurpleLight.withValues(alpha: 0.35)),
+              ),
+              child: ClipOval(
+                child: profile.photoUrl == null
+                    ? const Icon(
+                        Icons.person_rounded,
+                        color: Colors.white,
+                        size: 36,
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: profile.photoUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, _, _) => const Icon(
+                          Icons.person_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                        placeholder: (_, _) => Container(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: -4,
+          bottom: -4,
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black,
+              border: Border.all(color: kPurpleLight.withValues(alpha: 0.7)),
+            ),
+            child: busy
+                ? const Padding(
+                    padding: EdgeInsets.all(7),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.edit_rounded, size: 16, color: Colors.white),
+          ),
+        ),
+      ],
+    );
   }
 }
 

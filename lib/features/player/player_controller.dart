@@ -60,7 +60,7 @@ class PlayerController extends ChangeNotifier {
       throw const AppException('This item does not have playable audio yet.');
     }
     await _audioPlayer.setUrl(current.audioUrl);
-    await _audioPlayer.play();
+    unawaited(_audioPlayer.play());
     notifyListeners();
   }
 

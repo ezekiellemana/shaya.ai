@@ -31,7 +31,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
 
     return ShayaScreenScaffold(
       title: 'Now Playing',
-      subtitle: song.genre.join(' · '),
+      subtitle: song.genreSummary,
       showGlow: true,
       child: Column(
         children: [

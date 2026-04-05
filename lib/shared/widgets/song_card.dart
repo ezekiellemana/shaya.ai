@@ -46,9 +46,7 @@ class SongCard extends StatelessWidget {
                   Text(song.title, style: ShayaTextStyles.songName),
                   const SizedBox(height: 4),
                   Text(
-                    song.genre.isEmpty
-                        ? 'AI composition'
-                        : song.genre.join(' · '),
+                    song.genreSummary,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: ShayaTextStyles.metadata,

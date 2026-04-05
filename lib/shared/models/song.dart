@@ -42,6 +42,8 @@ class Song {
   bool get hasVideo => videoUrl != null && videoUrl!.isNotEmpty;
   bool get hasAudio => audioUrl.isNotEmpty;
   bool get hasLyrics => lyricsSections.isNotEmpty;
+  String get genreSummary =>
+      genre.isEmpty ? 'AI composition' : genre.join(' | ');
 
   factory Song.fromJson(Map<String, dynamic> json) {
     final sections = (json['lyrics_sections'] as List<dynamic>? ?? const [])

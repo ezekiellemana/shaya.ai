@@ -91,6 +91,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       );
       context.go('/login');
     } catch (error) {
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.toString())));

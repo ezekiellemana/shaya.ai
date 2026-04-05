@@ -113,6 +113,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       context.go('/home');
     } catch (error) {
+      if (!mounted) {
+        return;
+      }
       _showMessage(error.toString());
     }
   }
@@ -121,6 +124,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(appSessionControllerProvider).signInWithGoogle();
     } catch (error) {
+      if (!mounted) {
+        return;
+      }
       _showMessage(error.toString());
     }
   }

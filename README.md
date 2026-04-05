@@ -36,6 +36,13 @@ Read the step-by-step beginner guide in `docs/01-environment-setup.md`.
 - `.\tool\deploy-hosted.ps1 -ProjectRef <your-project-ref>`
   Pushes the database, uploads secrets, and deploys the Edge Functions to a hosted Supabase project.
 
+## Android release prep
+
+- Copy `android/key.properties.example` to `android/key.properties` when you are ready to sign release builds.
+- Put your upload keystore inside `android/` and point `storeFile` at it.
+- If `android/key.properties` is missing, release builds still fall back to the debug key so local smoke tests keep working.
+- When your real keystore is in place, `flutter build apk --release --dart-define-from-file=dart_defines.json` will use it automatically.
+
 ## Security reminders
 
 - Never commit `dart_defines.json` or `supabase/.env.local`.

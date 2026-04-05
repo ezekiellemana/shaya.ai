@@ -1,4 +1,4 @@
-package com.example.shaya_ai
+package com.shayaai.app
 
 import io.flutter.embedding.android.FlutterActivity
 

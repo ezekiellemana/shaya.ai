@@ -67,6 +67,8 @@ class SongsRepository {
           .from('songs')
           .select()
           .eq('is_public', true)
+          .eq('content_kind', 'song')
+          .neq('audio_url', '')
           .order('created_at', ascending: false)
           .limit(20),
     );
@@ -213,6 +215,7 @@ class PlaylistsRepository {
   Future<Playlist> createPlaylist(
     String name, {
     List<String> songIds = const [],
+    bool isPublic = false,
   }) async {
     final client = _authenticatedClient;
     final row = Map<String, dynamic>.from(
@@ -221,7 +224,8 @@ class PlaylistsRepository {
           .insert({
             'owner_id': client.auth.currentUser!.id,
             'name': name,
-            'song_ids': songIds,
+            'song_ids': _dedupeSongIds(songIds),
+            'is_public': isPublic,
           })
           .select()
           .single(),
@@ -242,9 +246,35 @@ class PlaylistsRepository {
     final client = _authenticatedClient;
     await client
         .from('playlists')
-        .update({'song_ids': songIds})
+        .update({'song_ids': _dedupeSongIds(songIds)})
         .eq('id', playlistId)
         .eq('owner_id', client.auth.currentUser!.id);
+  }
+
+  Future<void> setSongMembership(
+    Playlist playlist,
+    String songId, {
+    required bool shouldInclude,
+  }) async {
+    final updated = <String>[...playlist.songIds];
+    final alreadyIncluded = updated.contains(songId);
+    if (shouldInclude && !alreadyIncluded) {
+      updated.add(songId);
+    } else if (!shouldInclude && alreadyIncluded) {
+      updated.remove(songId);
+    }
+    await updateSongOrder(playlist.id, updated);
+  }
+
+  Future<void> removeSongFromAllPlaylists(String songId) async {
+    final playlists = await fetchPlaylists();
+    for (final playlist in playlists) {
+      if (!playlist.songIds.contains(songId)) {
+        continue;
+      }
+      final updated = playlist.songIds.where((id) => id != songId).toList();
+      await updateSongOrder(playlist.id, updated);
+    }
   }
 
   Future<void> deletePlaylist(String playlistId) async {
@@ -262,6 +292,18 @@ class PlaylistsRepository {
       throw const AppException('Please sign in to continue.');
     }
     return client;
+  }
+
+  List<String> _dedupeSongIds(List<String> songIds) {
+    final normalized = <String>[];
+    for (final songId in songIds) {
+      final trimmed = songId.trim();
+      if (trimmed.isEmpty || normalized.contains(trimmed)) {
+        continue;
+      }
+      normalized.add(trimmed);
+    }
+    return normalized;
   }
 }
 

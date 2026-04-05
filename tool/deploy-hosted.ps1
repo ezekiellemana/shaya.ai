@@ -71,13 +71,15 @@ try {
     "generate-music",
     "generate-video",
     "generate-lyrics",
-    "verify-purchase"
+    "verify-purchase",
+    "delete-account"
   )) {
     Write-Host "Deploying $functionName..."
     Invoke-SupabaseCommand -Arguments @(
       "functions",
       "deploy",
       $functionName,
+      "--no-verify-jwt",
       "--project-ref",
       $ProjectRef
     )

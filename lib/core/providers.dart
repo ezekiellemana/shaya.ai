@@ -15,6 +15,7 @@ import 'package:shaya_ai/features/generate/generation_service.dart';
 import 'package:shaya_ai/features/lyrics/lyrics_controller.dart';
 import 'package:shaya_ai/features/player/player_controller.dart';
 import 'package:shaya_ai/features/profile/profile_repository.dart';
+import 'package:shaya_ai/features/search/search_results.dart';
 import 'package:shaya_ai/features/subscription/subscription_controller.dart';
 import 'package:shaya_ai/shared/models/playlist.dart';
 import 'package:shaya_ai/shared/models/profile_stats.dart';
@@ -76,6 +77,7 @@ final profileRepositoryProvider = Provider<ProfileRepository>(
     songsRepository: ref.watch(songsRepositoryProvider),
     playlistsRepository: ref.watch(playlistsRepositoryProvider),
     quotaRepository: ref.watch(quotaRepositoryProvider),
+    edgeFunctionsClient: ref.watch(edgeFunctionsClientProvider),
   ),
 );
 
@@ -140,6 +142,17 @@ final librarySongsProvider = FutureProvider<List<Song>>((ref) {
 final playlistsProvider = FutureProvider<List<Playlist>>((ref) {
   return ref.watch(playlistsRepositoryProvider).fetchPlaylists();
 });
+
+final searchResultsProvider = FutureProvider.autoDispose
+    .family<SearchResults, String>((ref, query) async {
+      final songs = await ref.watch(librarySongsProvider.future);
+      final playlists = await ref.watch(playlistsProvider.future);
+      return buildSearchResults(
+        query: query,
+        songs: songs,
+        playlists: playlists,
+      );
+    });
 
 final currentQuotaProvider = FutureProvider<UsageQuota?>((ref) {
   return ref.watch(quotaRepositoryProvider).fetchCurrentQuota();

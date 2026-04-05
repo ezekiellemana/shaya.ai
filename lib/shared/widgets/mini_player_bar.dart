@@ -52,9 +52,7 @@ class MiniPlayerBar extends ConsumerWidget {
                       Text(song.title, style: ShayaTextStyles.songName),
                       const SizedBox(height: 4),
                       Text(
-                        song.genre.isEmpty
-                            ? 'AI track'
-                            : song.genre.join(' · '),
+                        song.genreSummary,
                         style: ShayaTextStyles.metadata,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
