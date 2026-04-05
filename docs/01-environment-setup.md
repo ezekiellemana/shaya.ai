@@ -91,6 +91,8 @@ Only do this when you are ready to test Google auth.
 3. Set `SHAYA_ENABLE_GOOGLE_AUTH` to `"true"` in `dart_defines.json`.
 4. Restart the Flutter app fully.
 
+For the current Supabase OAuth flow in this repo, you do not need `google-services.json` or `GoogleService-Info.plist`. Those files are only for native Google SDK or Firebase-based setups.
+
 ### 4.3 Link this repo to the hosted project
 
 ```powershell

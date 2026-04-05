@@ -26,6 +26,7 @@ Read the step-by-step beginner guide in `docs/01-environment-setup.md`.
 5. Run `.\tool\run-dev.ps1`.
 
 Keep `SHAYA_ENABLE_GOOGLE_AUTH` set to `"false"` until the Google provider is configured in Supabase. The login screen will only show the Google button when that flag is enabled.
+For the current Supabase OAuth flow, you do not need `google-services.json` or `GoogleService-Info.plist`.
 
 ## Helpful scripts
 
@@ -41,16 +42,22 @@ Keep `SHAYA_ENABLE_GOOGLE_AUTH` set to `"false"` until the Google provider is co
   Verifies package IDs, adaptive icons, privacy strings, signing scaffolding, and release-build readiness.
 - `.\tool\bootstrap-android-signing.ps1`
   Generates a local Android upload keystore plus `android/key.properties` for release builds.
+- `.\tool\backup-android-signing.ps1`
+  Copies your Android signing files into a backup folder outside the repo and records a non-secret backup marker.
+- `.\tool\restore-android-signing.ps1`
+  Restores the Android signing files from a previous backup onto a new machine.
 
 ## Android release prep
 
 - Copy `android/key.properties.example` to `android/key.properties` when you are ready to sign release builds.
 - Or use `.\tool\bootstrap-android-signing.ps1` to generate both files locally.
+- After generating them, run `.\tool\backup-android-signing.ps1` so you do not lose your release key when you switch machines.
 - Put your upload keystore inside `android/` and point `storeFile` at it.
 - If `android/key.properties` is missing, release builds still fall back to the debug key so local smoke tests keep working.
 - When your real keystore is in place, `flutter build apk --release --dart-define-from-file=dart_defines.json` will use it automatically.
 
 For the full repo-specific checklist, read `docs/02-release-prep.md`.
+For the Mac-only iOS handoff, read `docs/03-ios-signing-handoff.md`.
 
 ## Security reminders
 

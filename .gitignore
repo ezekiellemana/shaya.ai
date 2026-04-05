@@ -48,5 +48,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/key.properties
+/android/.signing-backup.json
 /android/upload-keystore.jks
 /android/app/upload-keystore.jks

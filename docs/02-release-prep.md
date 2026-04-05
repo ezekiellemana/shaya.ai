@@ -54,6 +54,14 @@ That creates:
 
 Both files are already gitignored.
 
+Right after that, create a backup:
+
+```powershell
+.\tool\backup-android-signing.ps1
+```
+
+That stores a copy outside the repo and updates a non-secret repo marker so the release checker can confirm you backed it up.
+
 If you prefer to create the keystore manually, use:
 
 Run this from the project root:
@@ -105,6 +113,7 @@ flutter build appbundle --release --dart-define-from-file=dart_defines.json
 - add your real keystore before store submission
 - confirm the version in `pubspec.yaml`
 - if you used the bootstrap script, back up the generated keystore and `android/key.properties` somewhere safe before changing machines
+- for the current Supabase OAuth flow, no `google-services.json` or `GoogleService-Info.plist` is required
 
 ## 7. iOS release checklist
 
@@ -116,6 +125,8 @@ These steps still need a Mac:
 - verify the Shaya AI app icons and launch screen
 - verify `NSPhotoLibraryUsageDescription` in `Info.plist`
 - archive and validate the build
+
+Use [03-ios-signing-handoff.md](/d:/PROJECTS/Shaya%20ai/docs/03-ios-signing-handoff.md) for the exact Xcode sequence.
 
 ## 8. What is already handled in this repo
 
@@ -132,4 +143,4 @@ These steps still need a Mac:
 - Apple signing and archive validation
 - Play Console / App Store Connect submission
 - real subscription products
-- real Google Sign-In provider files if you enable that path fully on iOS
+- Supabase Google provider setup if you later enable Google sign-in

@@ -78,6 +78,23 @@ function Get-KeyProperties {
   return $map
 }
 
+function Get-BackupState {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path
+  )
+
+  if (-not (Test-Path $Path)) {
+    return $null
+  }
+
+  try {
+    return Get-Content $Path -Raw | ConvertFrom-Json
+  } catch {
+    return $null
+  }
+}
+
 Write-Host "Shaya AI release readiness check"
 Write-Host ""
 
@@ -88,6 +105,7 @@ $iosPbxprojPath = Join-Path $root "ios\Runner.xcodeproj\project.pbxproj"
 $iosInfoPlistPath = Join-Path $root "ios\Runner\Info.plist"
 $keyPropertiesExamplePath = Join-Path $root "android\key.properties.example"
 $keyPropertiesPath = Join-Path $root "android\key.properties"
+$backupStatePath = Join-Path $root "android\.signing-backup.json"
 $releaseApkPath = Join-Path $root "build\app\outputs\flutter-apk\app-release.apk"
 $adaptiveIconPath = Join-Path $root "android\app\src\main\res\mipmap-anydpi-v26\ic_launcher.xml"
 $adaptiveRoundIconPath = Join-Path $root "android\app\src\main\res\mipmap-anydpi-v26\ic_launcher_round.xml"
@@ -141,12 +159,23 @@ if (Test-Path $keyPropertiesPath) {
   Write-Status -Label "Android signing config" -Ok $false -Message "Copy android/key.properties.example to android/key.properties before store submission."
 }
 
-Write-Status -Label "Google iOS config" -Ok $false -Prefix "[LATER]" -Message "Add GoogleService-Info.plist when Google Sign-In is ready for iOS."
-Write-Status -Label "Google Android config" -Ok $false -Prefix "[LATER]" -Message "Add google-services.json if you later adopt Firebase-backed Android services."
+$backupState = Get-BackupState -Path $backupStatePath
+if ($null -ne $backupState) {
+  $backupDirectory = [string]$backupState.backupDirectory
+  $backupCreatedAt = [string]$backupState.createdAt
+  $backupStoreFile = [string]$backupState.storeFile
+  $backupConfigExists = -not [string]::IsNullOrWhiteSpace($backupDirectory) -and (Test-Path (Join-Path $backupDirectory "key.properties"))
+  $backupStoreExists = -not [string]::IsNullOrWhiteSpace($backupDirectory) -and -not [string]::IsNullOrWhiteSpace($backupStoreFile) -and (Test-Path (Join-Path $backupDirectory $backupStoreFile))
+  Write-Status -Label "Android signing backup" -Ok ($backupConfigExists -and $backupStoreExists) -Message "Latest backup: $backupCreatedAt"
+} else {
+  Write-Status -Label "Android signing backup" -Ok $false -Message "Run .\tool\backup-android-signing.ps1 after generating your keystore."
+}
+
+Write-Host "[INFO] Google platform files - Not required for the current Supabase OAuth flow. Only add GoogleService-Info.plist or google-services.json if you later switch to native Google/Firebase setup."
 Write-Status -Label "Apple signing" -Ok $false -Prefix "[LATER]" -Message "Needs Xcode team provisioning and archive validation on macOS."
 
 Write-Host ""
 Write-Host "Next steps"
 Write-Host "1. Run docs/02-release-prep.md."
-Write-Host "2. Use .\tool\bootstrap-android-signing.ps1 if you still need local Android signing files."
+Write-Host "2. Use .\tool\backup-android-signing.ps1 after generating or replacing Android signing files."
 Write-Host "3. Verify iOS signing and archive on a Mac."
