@@ -1,15 +1,25 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/models/song.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
+import 'package:shaya_ai/shared/widgets/song_artwork.dart';
 
 class SongCard extends StatelessWidget {
-  const SongCard({super.key, required this.song, this.onTap, this.trailing});
+  const SongCard({
+    super.key,
+    required this.song,
+    this.onTap,
+    this.trailing,
+    this.heroTag,
+    this.hapticType = ShayaHapticType.light,
+  });
 
   final Song song;
   final VoidCallback? onTap;
   final Widget? trailing;
+  final String? heroTag;
+  final ShayaHapticType? hapticType;
 
   @override
   Widget build(BuildContext context) {
@@ -21,24 +31,12 @@ class SongCard extends StatelessWidget {
 
     return ShayaSurfaceCard(
       onTap: onTap,
+      hapticType: onTap == null ? null : hapticType,
       radius: 22,
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: SizedBox(
-              width: 68,
-              height: 68,
-              child: song.thumbnailUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: song.thumbnailUrl,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, _, _) => _fallbackArt(),
-                    )
-                  : _fallbackArt(),
-            ),
-          ),
+          ShayaSongArtwork(song: song, size: 68, radius: 18, heroTag: heroTag),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -85,28 +83,6 @@ class SongCard extends StatelessWidget {
                   size: 20,
                 ),
               ),
-        ],
-      ),
-    );
-  }
-
-  Widget _fallbackArt() {
-    return DecoratedBox(
-      decoration: const BoxDecoration(gradient: kGradCard),
-      child: Stack(
-        children: const [
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Icon(Icons.stars_rounded, color: Colors.white70, size: 16),
-          ),
-          Center(
-            child: Icon(
-              Icons.music_note_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
         ],
       ),
     );

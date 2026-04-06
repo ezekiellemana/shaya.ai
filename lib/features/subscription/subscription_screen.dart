@@ -5,6 +5,7 @@ import 'package:shaya_ai/core/providers.dart';
 import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/models/subscription_tier.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 
@@ -140,6 +141,7 @@ class SubscriptionScreen extends ConsumerWidget {
                           const SizedBox(height: 18),
                           SecondaryOutlineButton(
                             label: selected ? 'Selected' : 'Choose plan',
+                            hapticType: ShayaHapticType.selection,
                             onPressed: () => ref
                                 .read(subscriptionControllerProvider)
                                 .selectTier(tier),

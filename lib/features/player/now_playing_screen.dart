@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shaya_ai/core/providers.dart';
 import 'package:shaya_ai/core/theme.dart';
+import 'package:shaya_ai/shared/models/song.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
+import 'package:shaya_ai/shared/widgets/shaya_motion.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
+import 'package:shaya_ai/shared/widgets/song_artwork.dart';
 import 'package:shaya_ai/shared/widgets/waveform_visualizer.dart';
 
 class NowPlayingScreen extends ConsumerStatefulWidget {
@@ -27,6 +31,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
         child: AsyncStateView(
           title: 'Nothing playing yet',
           message: 'Play a song from Home, Generate, or Library first.',
+          artworkVariant: ShayaArtworkVariant.player,
         ),
       );
     }
@@ -43,10 +48,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
             child: Column(
               children: [
                 Container(
-                  width: 280,
-                  height: 280,
                   decoration: BoxDecoration(
-                    gradient: kGradCard,
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
                       color: kPurpleLight.withValues(alpha: 0.25),
@@ -59,29 +61,11 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                       ),
                     ],
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            gradient: RadialGradient(
-                              colors: [
-                                kPurpleLight.withValues(alpha: 0.16),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Center(
-                        child: Icon(
-                          Icons.album_rounded,
-                          size: 72,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                  child: ShayaSongArtwork(
+                    song: song,
+                    size: 280,
+                    radius: 30,
+                    heroTag: ShayaHeroTags.songArtwork(song.id),
                   ),
                 ),
                 const SizedBox(height: 22),
@@ -122,6 +106,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                   playedRatio: player.progressRatio,
                   barCount: 48,
                   height: 34,
+                  variant: _waveformVariant(song),
                 ),
                 const SizedBox(height: 12),
                 Slider(
@@ -163,7 +148,10 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
                         ],
                       ),
                       child: IconButton(
-                        onPressed: player.togglePlayback,
+                        onPressed: () {
+                          ShayaHaptics.trigger(ShayaHapticType.light);
+                          player.togglePlayback();
+                        },
                         icon: Icon(
                           player.isPlaying
                               ? Icons.pause_rounded
@@ -254,6 +242,16 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen> {
     final seconds = safe.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
+
+  WaveformVariant _waveformVariant(Song song) {
+    if (song.hasVideo) {
+      return WaveformVariant.cinematic;
+    }
+    if (song.contentKind == SongContentKind.lyrics || song.hasLyrics) {
+      return WaveformVariant.lyrical;
+    }
+    return WaveformVariant.studio;
+  }
 }
 
 class _ControlButton extends StatelessWidget {
@@ -275,7 +273,10 @@ class _ControlButton extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.06),
       ),
       child: IconButton(
-        onPressed: onPressed,
+        onPressed: () {
+          ShayaHaptics.trigger(ShayaHapticType.light);
+          onPressed();
+        },
         icon: Icon(icon, size: size, color: Colors.white),
       ),
     );

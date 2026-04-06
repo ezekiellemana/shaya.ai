@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shaya_ai/core/providers.dart';
+import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/models/playlist.dart';
 import 'package:shaya_ai/shared/models/song.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
+import 'package:shaya_ai/shared/widgets/shaya_motion.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_skeletons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/song_card.dart';
 
@@ -30,6 +34,7 @@ class PlaylistScreen extends ConsumerWidget {
             child: AsyncStateView(
               title: 'Playlist not found',
               message: 'This collection is no longer available.',
+              artworkVariant: ShayaArtworkVariant.playlist,
             ),
           );
         }
@@ -57,6 +62,55 @@ class PlaylistScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          children: [
+                            Hero(
+                              tag: ShayaHeroTags.playlistCover(playlist.id),
+                              child: Container(
+                                width: 96,
+                                height: 96,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(28),
+                                  gradient: kGradCard,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: kPrimaryPurple.withValues(
+                                        alpha: 0.22,
+                                      ),
+                                      blurRadius: 28,
+                                      offset: const Offset(0, 16),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.queue_music_rounded,
+                                  color: Colors.white,
+                                  size: 38,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    playlist.name,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineMedium,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '${playlistSongs.length} tracks ready for playback.',
+                                    style: ShayaTextStyles.body,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
                         const ShayaSectionHeader(
                           title: 'Playlist controls',
                           subtitle:
@@ -150,6 +204,7 @@ class PlaylistScreen extends ConsumerWidget {
                           'Add songs, videos, or lyrics first, then build playlists.',
                       actionLabel: 'Back to library',
                       onAction: () => context.go('/library'),
+                      artworkVariant: ShayaArtworkVariant.library,
                     )
                   else if (playlistSongs.isEmpty)
                     AsyncStateView(
@@ -159,6 +214,7 @@ class PlaylistScreen extends ConsumerWidget {
                       actionLabel: 'Add songs',
                       onAction: () =>
                           _manageSongs(context, ref, playlist, songs),
+                      artworkVariant: ShayaArtworkVariant.playlist,
                     )
                   else
                     ShayaSurfaceCard(
@@ -195,6 +251,7 @@ class PlaylistScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: SongCard(
                                   song: song,
+                                  heroTag: ShayaHeroTags.songArtwork(song.id),
                                   onTap: () async {
                                     await ref
                                         .read(playerControllerProvider)
@@ -251,7 +308,7 @@ class PlaylistScreen extends ConsumerWidget {
           },
           loading: () => const ShayaScreenScaffold(
             title: 'Playlist',
-            child: Center(child: CircularProgressIndicator()),
+            child: ShayaPlaylistDetailSkeleton(),
           ),
           error: (error, _) => ShayaScreenScaffold(
             title: 'Playlist',
@@ -259,13 +316,14 @@ class PlaylistScreen extends ConsumerWidget {
               title: 'Playlist unavailable',
               message: error.toString(),
               tone: ShayaStateTone.error,
+              artworkVariant: ShayaArtworkVariant.playlist,
             ),
           ),
         );
       },
       loading: () => const ShayaScreenScaffold(
         title: 'Playlist',
-        child: Center(child: CircularProgressIndicator()),
+        child: ShayaPlaylistDetailSkeleton(),
       ),
       error: (error, _) => ShayaScreenScaffold(
         title: 'Playlist',
@@ -273,6 +331,7 @@ class PlaylistScreen extends ConsumerWidget {
           title: 'Playlists unavailable',
           message: 'The playlist list could not be loaded right now.',
           tone: ShayaStateTone.error,
+          artworkVariant: ShayaArtworkVariant.playlist,
         ),
       ),
     );
@@ -353,6 +412,7 @@ class PlaylistScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     PrimaryGradientButton(
                       label: 'Save selection',
+                      hapticType: null,
                       onPressed: () async {
                         final orderedExisting = playlist.songIds
                             .where(selectedIds.contains)
@@ -373,6 +433,7 @@ class PlaylistScreen extends ConsumerWidget {
                         if (!sheetContext.mounted) {
                           return;
                         }
+                        ShayaHaptics.trigger(ShayaHapticType.medium);
                         Navigator.of(sheetContext).pop();
                         messenger.showSnackBar(
                           SnackBar(
@@ -431,6 +492,7 @@ class PlaylistScreen extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
+    ShayaHaptics.trigger(ShayaHapticType.light);
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Playlist renamed.')));
@@ -446,6 +508,7 @@ class PlaylistScreen extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
+    ShayaHaptics.trigger(ShayaHapticType.medium);
     context.pop();
   }
 
@@ -463,6 +526,7 @@ class PlaylistScreen extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
+    ShayaHaptics.trigger(ShayaHapticType.light);
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('${song.title} removed.')));

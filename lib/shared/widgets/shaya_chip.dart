@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:shaya_ai/core/theme.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
 
 class ShayaChip extends StatelessWidget {
   const ShayaChip({
     super.key,
     required this.label,
     required this.selected,
-    required this.onTap,
+    this.onTap,
     this.isMood = false,
   });
 
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool isMood;
 
   @override
@@ -21,7 +22,12 @@ class ShayaChip extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap == null
+            ? null
+            : () {
+                ShayaHaptics.trigger(ShayaHapticType.selection);
+                onTap?.call();
+              },
         borderRadius: BorderRadius.circular(radius),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),

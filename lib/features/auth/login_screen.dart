@@ -5,6 +5,7 @@ import 'package:shaya_ai/core/providers.dart';
 import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_skeletons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 
@@ -91,6 +92,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: 'Login',
                   isBusy: session.isBusy,
                   onPressed: _submit,
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: session.isBusy
+                      ? const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: ShayaAuthBusySkeleton(),
+                        )
+                      : const SizedBox.shrink(),
                 ),
                 if (appConfig.isGoogleAuthEnabled) ...[
                   const SizedBox(height: 12),

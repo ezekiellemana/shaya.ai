@@ -6,7 +6,9 @@ import 'package:shaya_ai/core/app_exception.dart';
 import 'package:shaya_ai/core/providers.dart';
 import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_skeletons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 
@@ -36,7 +38,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       title: 'Settings',
       subtitle: 'Language, notifications, data export, and account actions.',
       child: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const ShayaSettingsSkeleton()
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -69,6 +71,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ],
                         selected: {_language},
                         onSelectionChanged: (selection) async {
+                          ShayaHaptics.trigger(ShayaHapticType.selection);
                           setState(() => _language = selection.first);
                           await ref
                               .read(secureStoreProvider)
@@ -85,6 +88,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: SwitchListTile(
                           value: _notificationsEnabled,
                           onChanged: (value) async {
+                            ShayaHaptics.trigger(ShayaHapticType.selection);
                             setState(() => _notificationsEnabled = value);
                             await ref
                                 .read(secureStoreProvider)
@@ -182,6 +186,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) {
         return;
       }
+      ShayaHaptics.trigger(ShayaHapticType.medium);
       _showMessage('Your account has been permanently deleted.');
       context.go('/login');
     } on AppException catch (error) {

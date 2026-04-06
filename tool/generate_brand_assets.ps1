@@ -185,6 +185,188 @@ function Save-ScaledPng {
   $target.Dispose()
 }
 
+function New-CanvasRect {
+  param(
+    [int] $Width,
+    [int] $Height,
+    [bool] $Transparent = $false
+  )
+
+  $bitmap = New-Object System.Drawing.Bitmap $Width, $Height
+  $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+  $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+  $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+  $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+  if ($Transparent) {
+    $graphics.Clear([System.Drawing.Color]::Transparent)
+  }
+  return @{
+    Bitmap = $bitmap
+    Graphics = $graphics
+  }
+}
+
+function Draw-IllustrationBackdrop {
+  param(
+    [System.Drawing.Graphics] $Graphics,
+    [int] $Width,
+    [int] $Height,
+    [System.Drawing.Color] $Primary,
+    [System.Drawing.Color] $Secondary
+  )
+
+  Draw-Glow -Graphics $Graphics -Rect ([System.Drawing.RectangleF]::new([float] ($Width * 0.04), [float] ($Height * 0.12), [float] ($Width * 0.44), [float] ($Height * 0.68))) -CenterColor $Primary
+  Draw-Glow -Graphics $Graphics -Rect ([System.Drawing.RectangleF]::new([float] ($Width * 0.46), [float] ($Height * 0.08), [float] ($Width * 0.44), [float] ($Height * 0.68))) -CenterColor $Secondary
+
+  $frameRect = [System.Drawing.RectangleF]::new([float] ($Width * 0.06), [float] ($Height * 0.10), [float] ($Width * 0.88), [float] ($Height * 0.76))
+  $framePath = New-RoundedPath -Rect $frameRect -Radius 26
+  $frameBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+    [System.Drawing.PointF]::new([float] $frameRect.Left, [float] $frameRect.Top),
+    [System.Drawing.PointF]::new([float] $frameRect.Right, [float] $frameRect.Bottom),
+    [System.Drawing.Color]::FromArgb(50, 21, 16, 46),
+    [System.Drawing.Color]::FromArgb(30, 12, 16, 34)
+  )
+  $Graphics.FillPath($frameBrush, $framePath)
+  $frameBrush.Dispose()
+
+  $framePen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(68, 196, 186, 255)), 2.4
+  $Graphics.DrawPath($framePen, $framePath)
+  $framePen.Dispose()
+  $framePath.Dispose()
+}
+
+function Draw-IllustrationBars {
+  param(
+    [System.Drawing.Graphics] $Graphics,
+    [float] $StartX,
+    [float] $BaselineY,
+    [float[]] $Heights,
+    [System.Drawing.Color] $Color
+  )
+
+  $brush = New-Object System.Drawing.SolidBrush $Color
+  for ($index = 0; $index -lt $Heights.Length; $index++) {
+    $height = $Heights[$index]
+    $rect = [System.Drawing.RectangleF]::new([float] ($StartX + ($index * 15)), [float] ($BaselineY - $height), 9, [float] $height)
+    $path = New-RoundedPath -Rect $rect -Radius 4
+    $Graphics.FillPath($brush, $path)
+    $path.Dispose()
+  }
+  $brush.Dispose()
+}
+
+function Draw-IllustrationCard {
+  param(
+    [System.Drawing.Graphics] $Graphics,
+    [float] $X,
+    [float] $Y,
+    [float] $Width,
+    [float] $Height,
+    [System.Drawing.Color] $Color
+  )
+
+  $rect = [System.Drawing.RectangleF]::new($X, $Y, $Width, $Height)
+  $path = New-RoundedPath -Rect $rect -Radius 18
+  $brush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+    [System.Drawing.PointF]::new([float] $rect.Left, [float] $rect.Top),
+    [System.Drawing.PointF]::new([float] $rect.Right, [float] $rect.Bottom),
+    [System.Drawing.Color]::FromArgb(80, $Color.R, $Color.G, $Color.B),
+    [System.Drawing.Color]::FromArgb(18, 255, 255, 255)
+  )
+  $Graphics.FillPath($brush, $path)
+  $brush.Dispose()
+  $path.Dispose()
+}
+
+function Draw-IllustrationRing {
+  param(
+    [System.Drawing.Graphics] $Graphics,
+    [float] $X,
+    [float] $Y,
+    [float] $Size,
+    [System.Drawing.Color] $Color
+  )
+
+  $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(120, $Color.R, $Color.G, $Color.B), 6)
+  $Graphics.DrawEllipse($pen, $X, $Y, $Size, $Size)
+  $pen.Dispose()
+}
+
+function Draw-IllustrationSilhouette {
+  param(
+    [System.Drawing.Graphics] $Graphics,
+    [float] $CenterX,
+    [float] $Top,
+    [System.Drawing.Color] $Color
+  )
+
+  $brush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(86, $Color.R, $Color.G, $Color.B))
+  $Graphics.FillEllipse($brush, $CenterX - 24, $Top, 48, 48)
+  $bodyPath = New-RoundedPath -Rect ([System.Drawing.RectangleF]::new([float] ($CenterX - 42), [float] ($Top + 58), 84, 42)) -Radius 20
+  $Graphics.FillPath($brush, $bodyPath)
+  $bodyPath.Dispose()
+  $brush.Dispose()
+}
+
+function Draw-EmptyVariant {
+  param(
+    [System.Drawing.Graphics] $Graphics,
+    [int] $Width,
+    [int] $Height,
+    [string] $Variant
+  )
+
+  $purple = [System.Drawing.Color]::FromArgb(116, 123, 47, 190)
+  $cyan = [System.Drawing.Color]::FromArgb(92, 34, 211, 238)
+  $pink = [System.Drawing.Color]::FromArgb(92, 224, 64, 251)
+  Draw-IllustrationBackdrop -Graphics $Graphics -Width $Width -Height $Height -Primary $purple -Secondary $cyan
+
+  switch ($Variant) {
+    'home' {
+      Draw-IllustrationBars -Graphics $Graphics -StartX 62 -BaselineY 174 -Heights @(24, 42, 30, 54, 38, 26, 46, 28) -Color ([System.Drawing.Color]::FromArgb(80, 255, 255, 255))
+      Draw-IllustrationCard -Graphics $Graphics -X 208 -Y 58 -Width 100 -Height 72 -Color $pink
+    }
+    'library' {
+      Draw-IllustrationCard -Graphics $Graphics -X 58 -Y 54 -Width 98 -Height 72 -Color $purple
+      Draw-IllustrationCard -Graphics $Graphics -X 108 -Y 74 -Width 112 -Height 80 -Color $cyan
+      Draw-IllustrationCard -Graphics $Graphics -X 176 -Y 94 -Width 118 -Height 84 -Color $pink
+    }
+    'playlist' {
+      Draw-IllustrationCard -Graphics $Graphics -X 66 -Y 68 -Width 74 -Height 74 -Color $purple
+      Draw-IllustrationCard -Graphics $Graphics -X 146 -Y 50 -Width 74 -Height 74 -Color $pink
+      Draw-IllustrationCard -Graphics $Graphics -X 226 -Y 68 -Width 74 -Height 74 -Color $cyan
+    }
+    'search' {
+      Draw-IllustrationRing -Graphics $Graphics -X 96 -Y 62 -Size 84 -Color $cyan
+      $handlePen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(96, 224, 64, 251), 12)
+      $handlePen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+      $handlePen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+      $Graphics.DrawLine($handlePen, 168, 134, 214, 178)
+      $handlePen.Dispose()
+      Draw-IllustrationBars -Graphics $Graphics -StartX 222 -BaselineY 176 -Heights @(16, 26, 20, 36, 28, 18) -Color ([System.Drawing.Color]::FromArgb(70, 255, 255, 255))
+    }
+    'player' {
+      Draw-IllustrationCard -Graphics $Graphics -X 82 -Y 46 -Width 92 -Height 92 -Color $purple
+      Draw-IllustrationBars -Graphics $Graphics -StartX 182 -BaselineY 174 -Heights @(30, 52, 34, 60, 42, 26, 48) -Color ([System.Drawing.Color]::FromArgb(84, 255, 255, 255))
+    }
+    'profile' {
+      Draw-IllustrationSilhouette -Graphics $Graphics -CenterX 116 -Top 54 -Color $pink
+      Draw-IllustrationCard -Graphics $Graphics -X 182 -Y 78 -Width 112 -Height 24 -Color $cyan
+      Draw-IllustrationCard -Graphics $Graphics -X 182 -Y 114 -Width 88 -Height 20 -Color $purple
+    }
+    'subscription' {
+      Draw-IllustrationCard -Graphics $Graphics -X 64 -Y 72 -Width 224 -Height 76 -Color $cyan
+      Draw-IllustrationCard -Graphics $Graphics -X 90 -Y 92 -Width 56 -Height 34 -Color $pink
+      Draw-IllustrationCard -Graphics $Graphics -X 164 -Y 92 -Width 86 -Height 20 -Color $purple
+    }
+    'payment' {
+      Draw-IllustrationCard -Graphics $Graphics -X 68 -Y 70 -Width 210 -Height 84 -Color $purple
+      Draw-IllustrationCard -Graphics $Graphics -X 96 -Y 98 -Width 32 -Height 24 -Color $cyan
+      Draw-IllustrationCard -Graphics $Graphics -X 146 -Y 98 -Width 100 -Height 18 -Color $pink
+    }
+  }
+}
+
 $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $brandingDir = Join-Path $root 'assets/branding'
 New-Item -ItemType Directory -Path $brandingDir -Force | Out-Null
@@ -229,6 +411,25 @@ $launchImageTargets = @(
 
 foreach ($target in $launchImageTargets) {
   Save-ScaledPng -Source $launchCanvas.Bitmap -Width $target.Size -Height $target.Size -Path (Join-Path $root $target.Path)
+}
+
+$emptyVariants = @(
+  'home',
+  'library',
+  'playlist',
+  'search',
+  'player',
+  'profile',
+  'subscription',
+  'payment'
+)
+
+foreach ($variant in $emptyVariants) {
+  $variantCanvas = New-CanvasRect -Width 360 -Height 224 -Transparent $true
+  Draw-EmptyVariant -Graphics $variantCanvas.Graphics -Width 360 -Height 224 -Variant $variant
+  $variantCanvas.Bitmap.Save((Join-Path $brandingDir "empty_$variant.png"), [System.Drawing.Imaging.ImageFormat]::Png)
+  $variantCanvas.Graphics.Dispose()
+  $variantCanvas.Bitmap.Dispose()
 }
 
 $iconCanvas.Graphics.Dispose()

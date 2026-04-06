@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shaya_ai/core/providers.dart';
 import 'package:shaya_ai/core/theme.dart';
+import 'package:shaya_ai/shared/models/song.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
+import 'package:shaya_ai/shared/widgets/shaya_motion.dart';
+import 'package:shaya_ai/shared/widgets/song_artwork.dart';
 import 'package:shaya_ai/shared/widgets/waveform_visualizer.dart';
 
 class MiniPlayerBar extends ConsumerWidget {
@@ -49,10 +53,7 @@ class MiniPlayerBar extends ConsumerWidget {
                 child: Row(
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
                       decoration: BoxDecoration(
-                        gradient: kGradAccent,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
@@ -62,9 +63,11 @@ class MiniPlayerBar extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.graphic_eq_rounded,
-                        color: Colors.white,
+                      child: ShayaSongArtwork(
+                        song: song,
+                        size: 48,
+                        radius: 14,
+                        heroTag: ShayaHeroTags.songArtwork(song.id),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -85,6 +88,7 @@ class MiniPlayerBar extends ConsumerWidget {
                             playedRatio: controller.progressRatio,
                             barCount: 18,
                             height: 18,
+                            variant: _variantForSong(song),
                           ),
                         ],
                       ),
@@ -95,7 +99,10 @@ class MiniPlayerBar extends ConsumerWidget {
                         color: Colors.white.withValues(alpha: 0.07),
                       ),
                       child: IconButton(
-                        onPressed: controller.togglePlayback,
+                        onPressed: () {
+                          ShayaHaptics.trigger(ShayaHapticType.light);
+                          controller.togglePlayback();
+                        },
                         icon: Icon(
                           controller.isPlaying
                               ? Icons.pause_rounded
@@ -113,5 +120,15 @@ class MiniPlayerBar extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  WaveformVariant _variantForSong(Song song) {
+    if (song.hasVideo) {
+      return WaveformVariant.cinematic;
+    }
+    if (song.contentKind == SongContentKind.lyrics || song.hasLyrics) {
+      return WaveformVariant.lyrical;
+    }
+    return WaveformVariant.studio;
   }
 }

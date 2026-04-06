@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_skeletons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 
@@ -54,6 +55,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   ],
                   selected: {_method},
                   onSelectionChanged: (selection) {
+                    ShayaHaptics.trigger(ShayaHapticType.selection);
                     setState(() => _method = selection.first);
                   },
                 ),
@@ -70,20 +72,13 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             ),
           ),
           const SizedBox(height: 18),
-          const ShayaSurfaceCard(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.lock_outline_rounded, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'This screen is intentionally a polished placeholder until the final billing gateway is connected in Phase 3.',
-                    style: ShayaTextStyles.body,
-                  ),
-                ),
-              ],
-            ),
+          const ShayaPaymentPlaceholderSkeleton(),
+          const SizedBox(height: 12),
+          const ShayaStateCard(
+            title: 'Gateway handoff pending',
+            message:
+                'The billing surface is ready, but final payment-provider connection stays deferred until Phase 3.',
+            artworkVariant: ShayaArtworkVariant.payment,
           ),
           const SizedBox(height: 20),
           PrimaryGradientButton(

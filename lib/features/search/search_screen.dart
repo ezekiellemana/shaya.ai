@@ -9,7 +9,10 @@ import 'package:shaya_ai/shared/models/playlist.dart';
 import 'package:shaya_ai/shared/models/song.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/shaya_chip.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
+import 'package:shaya_ai/shared/widgets/shaya_motion.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_skeletons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/song_card.dart';
 
@@ -97,11 +100,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onPlaySong: (song, queue) =>
                   _playSong(song, queue: queue, router: router),
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const ShayaSearchResultsSkeleton(),
             error: (error, _) => AsyncStateView(
               title: 'Search unavailable',
               message: error.toString(),
               tone: ShayaStateTone.error,
+              artworkVariant: ShayaArtworkVariant.search,
             ),
           ),
         ],
@@ -189,6 +193,7 @@ class _SearchResultsView extends StatelessWidget {
         message: results.hasQuery
             ? 'No songs or playlists match "${results.query}".'
             : 'Nothing to search yet. Create songs, lyrics, or playlists and they will appear here.',
+        artworkVariant: ShayaArtworkVariant.search,
       );
     }
 
@@ -246,6 +251,7 @@ class _SearchResultsView extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: SongCard(
                   song: song,
+                  heroTag: ShayaHeroTags.songArtwork(song.id),
                   onTap: () => onPlaySong(song, results.songs),
                 ),
               );
@@ -273,19 +279,23 @@ class _PlaylistResultCard extends StatelessWidget {
     final preview = songs.take(2).map((song) => song.title).join(' / ');
     return ShayaSurfaceCard(
       onTap: onTap,
+      hapticType: ShayaHapticType.light,
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(
-                colors: [Color(0xFF220A3E), Color(0xFF0D1B3E)],
+          Hero(
+            tag: ShayaHeroTags.playlistCover(playlist.id),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF220A3E), Color(0xFF0D1B3E)],
+                ),
               ),
+              child: const Icon(Icons.queue_music_rounded, color: Colors.white),
             ),
-            child: const Icon(Icons.queue_music_rounded, color: Colors.white),
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -7,7 +7,10 @@ import 'package:shaya_ai/shared/models/playlist.dart';
 import 'package:shaya_ai/shared/models/song.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/shaya_chip.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
+import 'package:shaya_ai/shared/widgets/shaya_motion.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_skeletons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/song_card.dart';
 
@@ -99,6 +102,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         'Create one to group tracks, videos, and lyric drafts.',
                     actionLabel: 'Create playlist',
                     onAction: () => _createPlaylist(),
+                    artworkVariant: ShayaArtworkVariant.playlist,
                   )
                 else
                   Column(
@@ -115,11 +119,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 const SizedBox(height: 20),
               ],
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const ShayaLibrarySkeleton(),
             error: (error, _) => AsyncStateView(
               title: 'Playlists unavailable',
               message: error.toString(),
               tone: ShayaStateTone.error,
+              artworkVariant: ShayaArtworkVariant.playlist,
             ),
           ),
           ShayaSectionHeader(
@@ -155,6 +160,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         _LibraryTab.videos => 'video',
                         _LibraryTab.lyrics => 'lyric draft',
                       }} to fill this section.',
+                  artworkVariant: ShayaArtworkVariant.library,
                 );
               }
 
@@ -164,6 +170,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: SongCard(
                       song: song,
+                      heroTag: ShayaHeroTags.songArtwork(song.id),
                       onTap: () => _playSong(song, filtered),
                       trailing: PopupMenuButton<_SongMenuAction>(
                         onSelected: (action) async {
@@ -194,11 +201,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 }).toList(),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const ShayaLibrarySkeleton(),
             error: (error, _) => AsyncStateView(
               title: 'Library unavailable',
               message: error.toString(),
               tone: ShayaStateTone.error,
+              artworkVariant: ShayaArtworkVariant.library,
             ),
           ),
         ],
@@ -256,6 +264,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       if (!mounted) {
         return;
       }
+      ShayaHaptics.trigger(ShayaHapticType.medium);
       if (openAfterCreate) {
         await router.push('/playlist/${playlist.id}');
       } else {
@@ -394,6 +403,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                             openAfterCreate: false,
                           );
                         },
+                        artworkVariant: ShayaArtworkVariant.playlist,
                       )
                     else
                       ConstrainedBox(
@@ -551,17 +561,21 @@ class _PlaylistLibraryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShayaSurfaceCard(
       onTap: onTap,
+      hapticType: ShayaHapticType.light,
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: kGradCard,
+          Hero(
+            tag: ShayaHeroTags.playlistCover(playlist.id),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: kGradCard,
+              ),
+              child: const Icon(Icons.queue_music_rounded, color: Colors.white),
             ),
-            child: const Icon(Icons.queue_music_rounded, color: Colors.white),
           ),
           const SizedBox(width: 14),
           Expanded(

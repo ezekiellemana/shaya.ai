@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shaya_ai/core/theme.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
 
 class PrimaryGradientButton extends StatelessWidget {
   const PrimaryGradientButton({
@@ -8,12 +9,14 @@ class PrimaryGradientButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.isBusy = false,
+    this.hapticType = ShayaHapticType.light,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool isBusy;
+  final ShayaHapticType? hapticType;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +47,14 @@ class PrimaryGradientButton extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: onPressed,
+            onTap: onPressed == null
+                ? null
+                : () {
+                    if (hapticType != null) {
+                      ShayaHaptics.trigger(hapticType!);
+                    }
+                    onPressed?.call();
+                  },
             borderRadius: BorderRadius.circular(18),
             child: Center(
               child: isBusy
@@ -77,18 +87,28 @@ class SecondaryOutlineButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.hapticType = ShayaHapticType.light,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final ShayaHapticType? hapticType;
 
   @override
   Widget build(BuildContext context) {
+    final wrappedPress = onPressed == null
+        ? null
+        : () {
+            if (hapticType != null) {
+              ShayaHaptics.trigger(hapticType!);
+            }
+            onPressed?.call();
+          };
     final button = icon == null
-        ? OutlinedButton(onPressed: onPressed, child: Text(label))
+        ? OutlinedButton(onPressed: wrappedPress, child: Text(label))
         : OutlinedButton.icon(
-            onPressed: onPressed,
+            onPressed: wrappedPress,
             icon: Icon(icon, size: 18, color: Colors.white),
             label: Text(label),
           );

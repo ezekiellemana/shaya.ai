@@ -9,7 +9,11 @@ import 'package:shaya_ai/shared/models/user_profile.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/quota_bar.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
+import 'package:shaya_ai/shared/widgets/shaya_haptics.dart';
+import 'package:shaya_ai/shared/widgets/shaya_motion.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_shimmer.dart';
+import 'package:shaya_ai/shared/widgets/shaya_skeletons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -42,6 +46,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             return const AsyncStateView(
               title: 'Profile unavailable',
               message: 'Sign in to view your profile.',
+              artworkVariant: ShayaArtworkVariant.profile,
             );
           }
           return Column(
@@ -214,11 +219,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const ShayaProfileSkeleton(),
         error: (error, _) => AsyncStateView(
           title: 'Profile unavailable',
           message: error.toString(),
           tone: ShayaStateTone.error,
+          artworkVariant: ShayaArtworkVariant.profile,
         ),
       ),
     );
@@ -256,6 +262,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await ref.read(profileRepositoryProvider).updateDisplayName(name.trim());
       ref.invalidate(currentUserProfileProvider);
       if (mounted) {
+        ShayaHaptics.trigger(ShayaHapticType.light);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Name updated.')));
@@ -288,6 +295,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await ref.read(profileRepositoryProvider).uploadAvatar(image);
       ref.invalidate(currentUserProfileProvider);
       if (mounted) {
+        ShayaHaptics.trigger(ShayaHapticType.light);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${profile.displayName} photo updated.')),
         );
@@ -319,82 +327,101 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(999),
-            onTap: onTap,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.94, end: 1),
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.scale(scale: value, child: child),
+        );
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Hero(
+            tag: ShayaHeroTags.profileAvatarCurrentUser,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: onTap,
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: profile.photoUrl == null
+                        ? const LinearGradient(
+                            colors: [Color(0xFF7B2FBE), Color(0xFFE040FB)],
+                          )
+                        : null,
+                    color: profile.photoUrl == null
+                        ? null
+                        : Colors.white.withValues(alpha: 0.06),
+                    border: Border.all(
+                      color: kPurpleLight.withValues(alpha: 0.35),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: kPrimaryPurple.withValues(alpha: 0.25),
+                        blurRadius: 24,
+                        offset: const Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: profile.photoUrl == null
+                        ? const Icon(
+                            Icons.person_rounded,
+                            color: Colors.white,
+                            size: 40,
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: profile.photoUrl!,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, _, _) => const Icon(
+                              Icons.person_rounded,
+                              color: Colors.white,
+                              size: 36,
+                            ),
+                            placeholder: (_, _) => const ShayaSkeletonBlock(
+                              width: 96,
+                              height: 96,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: -4,
             child: Container(
-              width: 96,
-              height: 96,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: profile.photoUrl == null
-                    ? const LinearGradient(
-                        colors: [Color(0xFF7B2FBE), Color(0xFFE040FB)],
-                      )
-                    : null,
-                color: profile.photoUrl == null
-                    ? null
-                    : Colors.white.withValues(alpha: 0.06),
-                border: Border.all(color: kPurpleLight.withValues(alpha: 0.35)),
-                boxShadow: [
-                  BoxShadow(
-                    color: kPrimaryPurple.withValues(alpha: 0.25),
-                    blurRadius: 24,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
+                color: Colors.black,
+                border: Border.all(color: kPurpleLight.withValues(alpha: 0.7)),
               ),
-              child: ClipOval(
-                child: profile.photoUrl == null
-                    ? const Icon(
-                        Icons.person_rounded,
-                        color: Colors.white,
-                        size: 40,
-                      )
-                    : CachedNetworkImage(
-                        imageUrl: profile.photoUrl!,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, _, _) => const Icon(
-                          Icons.person_rounded,
-                          color: Colors.white,
-                          size: 36,
-                        ),
-                        placeholder: (_, _) => Container(
-                          color: Colors.white.withValues(alpha: 0.05),
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ),
-              ),
+              child: busy
+                  ? const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(
+                      Icons.edit_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    ),
             ),
           ),
-        ),
-        Positioned(
-          right: 0,
-          bottom: -4,
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black,
-              border: Border.all(color: kPurpleLight.withValues(alpha: 0.7)),
-            ),
-            child: busy
-                ? const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.edit_rounded, size: 16, color: Colors.white),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

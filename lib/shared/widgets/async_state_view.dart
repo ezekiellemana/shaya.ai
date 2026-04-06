@@ -10,6 +10,7 @@ class AsyncStateView extends StatelessWidget {
     this.onAction,
     this.icon,
     this.tone = ShayaStateTone.neutral,
+    this.artworkVariant = ShayaArtworkVariant.generic,
   });
 
   final String message;
@@ -18,6 +19,7 @@ class AsyncStateView extends StatelessWidget {
   final VoidCallback? onAction;
   final IconData? icon;
   final ShayaStateTone tone;
+  final ShayaArtworkVariant artworkVariant;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +33,7 @@ class AsyncStateView extends StatelessWidget {
           onAction: onAction,
           icon: icon,
           tone: tone,
+          artworkVariant: artworkVariant,
         ),
       ),
     );

@@ -92,7 +92,11 @@ class SplashScreen extends StatelessWidget {
                       const SizedBox(height: 24),
                       const SizedBox(
                         width: 160,
-                        child: WaveformVisualizer(barCount: 28, height: 28),
+                        child: WaveformVisualizer(
+                          barCount: 28,
+                          height: 28,
+                          variant: WaveformVariant.brand,
+                        ),
                       ),
                     ],
                   ),
