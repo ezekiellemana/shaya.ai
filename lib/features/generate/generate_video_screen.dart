@@ -6,6 +6,7 @@ import 'package:shaya_ai/shared/models/subscription_tier.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_chip.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 import 'package:shaya_ai/shared/widgets/song_card.dart';
 
@@ -48,64 +49,108 @@ class _GenerateVideoScreenState extends ConsumerState<GenerateVideoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (selectedSong != null)
-            SongCard(song: selectedSong)
-          else
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedSongId,
-                  hint: const Text('Pick a song from your library'),
-                  items: songs
-                      .where((song) => song.hasAudio)
-                      .map(
-                        (song) => DropdownMenuItem<String>(
-                          value: song.id,
-                          child: Text(song.title),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() => _selectedSongId = value),
+          ShayaSurfaceCard(
+            showGlow: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShayaSectionHeader(
+                  title: 'Source song',
+                  subtitle:
+                      'Pick a library track to anchor your visual sequence.',
                 ),
-              ),
-            ),
-          const SizedBox(height: 18),
-          ShayaTextField(
-            controller: _promptController,
-            label: 'Visual prompt',
-            hint: 'Sunset beach, slow motion, cinematic aerials',
-            maxLines: 4,
-          ),
-          const SizedBox(height: 18),
-          Text('Quality', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            children: AppConstants.videoQualities.map((quality) {
-              final locked =
-                  quality == '720p' && tier == SubscriptionTier.free ||
-                  quality == '1080p' && tier != SubscriptionTier.pro;
-              return Opacity(
-                opacity: locked ? 0.4 : 1,
-                child: IgnorePointer(
-                  ignoring: locked,
-                  child: ShayaChip(
-                    label: quality,
-                    selected: _quality == quality,
-                    onTap: () => setState(() => _quality = quality),
+                const SizedBox(height: 16),
+                if (selectedSong != null)
+                  SongCard(song: selectedSong)
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedSongId,
+                        hint: const Text('Pick a song from your library'),
+                        items: songs
+                            .where((song) => song.hasAudio)
+                            .map(
+                              (song) => DropdownMenuItem<String>(
+                                value: song.id,
+                                child: Text(song.title),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) =>
+                            setState(() => _selectedSongId = value),
+                      ),
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                if (songs.where((song) => song.hasAudio).isEmpty) ...[
+                  const SizedBox(height: 12),
+                  const ShayaStateCard(
+                    title: 'No source tracks available',
+                    message:
+                        'Generate music first, then come back to create a video from your library.',
+                    tone: ShayaStateTone.warning,
+                  ),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          ShayaSurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShayaSectionHeader(
+                  title: 'Visual direction',
+                  subtitle:
+                      'Describe the scene, movement, lighting, and atmosphere.',
+                ),
+                const SizedBox(height: 16),
+                ShayaTextField(
+                  controller: _promptController,
+                  label: 'Visual prompt',
+                  hint: 'Sunset beach, slow motion, cinematic aerials',
+                  maxLines: 4,
+                  prefixIcon: Icons.movie_creation_outlined,
+                ),
+                const SizedBox(height: 18),
+                const ShayaSectionHeader(
+                  title: 'Quality',
+                  subtitle: 'Higher resolutions unlock on higher tiers.',
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: AppConstants.videoQualities.map((quality) {
+                    final locked =
+                        quality == '720p' && tier == SubscriptionTier.free ||
+                        quality == '1080p' && tier != SubscriptionTier.pro;
+                    return Opacity(
+                      opacity: locked ? 0.4 : 1,
+                      child: IgnorePointer(
+                        ignoring: locked,
+                        child: ShayaChip(
+                          label: locked ? '$quality locked' : quality,
+                          selected: _quality == quality,
+                          onTap: () => setState(() => _quality = quality),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
           PrimaryGradientButton(
             label: 'Generate video',
             isBusy: _isBusy,

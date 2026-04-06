@@ -17,26 +17,49 @@ class ShayaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: isMood ? 26 : 24,
-        padding: EdgeInsets.symmetric(horizontal: isMood ? 14 : 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(isMood ? 13 : 6),
-          border: Border.all(
-            color: selected
-                ? const Color(0xFF9B4DCA)
-                : Colors.white.withValues(alpha: 0.08),
+    final radius = isMood ? 999.0 : 16.0;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          height: isMood ? 36 : 34,
+          padding: EdgeInsets.symmetric(horizontal: isMood ? 16 : 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(
+              color: selected
+                  ? kPurpleLight.withValues(alpha: 0.75)
+                  : Colors.white.withValues(alpha: 0.08),
+            ),
+            gradient: selected
+                ? LinearGradient(
+                    colors: [
+                      kPrimaryPurple.withValues(alpha: 0.30),
+                      kViolet.withValues(alpha: 0.18),
+                    ],
+                  )
+                : null,
+            color: selected ? null : Colors.white.withValues(alpha: 0.03),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: kPrimaryPurple.withValues(alpha: 0.18),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : null,
           ),
-          color: selected ? const Color(0x339B4DCA) : Colors.transparent,
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: ShayaTextStyles.tag.copyWith(
-              color: selected ? kPurpleLight : kTextMuted,
+          child: Center(
+            child: Text(
+              label,
+              style: ShayaTextStyles.tag.copyWith(
+                color: selected ? Colors.white : kBodyText,
+              ),
             ),
           ),
         ),

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shaya_ai/core/providers.dart';
+import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -35,35 +37,63 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       showGlow: true,
       child: Column(
         children: [
-          ShayaTextField(
-            controller: _nameController,
-            label: 'Display name',
-            hint: 'Dodoma Creative',
-          ),
-          const SizedBox(height: 14),
-          ShayaTextField(
-            controller: _emailController,
-            label: 'Email',
-            hint: 'you@example.com',
-            keyboardType: TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 14),
-          ShayaTextField(
-            controller: _passwordController,
-            label: 'Password',
-            hint: 'Minimum 8 characters',
-            obscureText: true,
-          ),
-          const SizedBox(height: 20),
-          PrimaryGradientButton(
-            label: 'Register',
-            isBusy: session.isBusy,
-            onPressed: _register,
+          ShayaSurfaceCard(
+            showGlow: true,
+            child: Column(
+              children: [
+                ShayaTextField(
+                  controller: _nameController,
+                  label: 'Display name',
+                  hint: 'Dodoma Creative',
+                  prefixIcon: Icons.badge_outlined,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: 14),
+                ShayaTextField(
+                  controller: _emailController,
+                  label: 'Email',
+                  hint: 'you@example.com',
+                  keyboardType: TextInputType.emailAddress,
+                  prefixIcon: Icons.mail_outline_rounded,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: 14),
+                ShayaTextField(
+                  controller: _passwordController,
+                  label: 'Password',
+                  hint: 'Minimum 8 characters',
+                  obscureText: true,
+                  prefixIcon: Icons.lock_outline_rounded,
+                  helper: '8+ characters',
+                ),
+                const SizedBox(height: 20),
+                PrimaryGradientButton(
+                  label: 'Register',
+                  isBusy: session.isBusy,
+                  onPressed: _register,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 18),
-          TextButton(
-            onPressed: () => context.go('/login'),
-            child: const Text('Already have an account? Login'),
+          ShayaSurfaceCard(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.mark_email_read_outlined, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Already have an account? Sign in and continue creating.',
+                    style: ShayaTextStyles.body,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => context.go('/login'),
+                  child: const Text('Login'),
+                ),
+              ],
+            ),
           ),
         ],
       ),

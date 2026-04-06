@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shaya_ai/core/theme.dart';
@@ -40,61 +42,84 @@ class _BottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentIndex = _indexForLocation(location);
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: const Color(0xF70A0A14),
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-        ),
-      ),
-      child: Row(
-        children: [
-          _NavItem(
-            label: 'Home',
-            icon: Icons.home_rounded,
-            selected: currentIndex == 0,
-            onTap: () => context.go('/home'),
-          ),
-          _NavItem(
-            label: 'Library',
-            icon: Icons.library_music_rounded,
-            selected: currentIndex == 1,
-            onTap: () => context.go('/library'),
-          ),
-          Expanded(
-            child: Center(
-              child: GestureDetector(
-                onTap: () => context.go('/generate'),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: kGradAccent,
-                  ),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              height: 78,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    kSurfaceDark.withValues(alpha: 0.96),
+                    kSurface.withValues(alpha: 0.84),
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: Row(
+                children: [
+                  _NavItem(
+                    label: 'Home',
+                    icon: Icons.home_rounded,
+                    selected: currentIndex == 0,
+                    onTap: () => context.go('/home'),
+                  ),
+                  _NavItem(
+                    label: 'Library',
+                    icon: Icons.library_music_rounded,
+                    selected: currentIndex == 1,
+                    onTap: () => context.go('/library'),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: () => context.go('/generate'),
+                        child: Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: kGradAccent,
+                            boxShadow: [
+                              BoxShadow(
+                                color: kPrimaryPurple.withValues(alpha: 0.30),
+                                blurRadius: 24,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.add_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _NavItem(
+                    label: 'Search',
+                    icon: Icons.search_rounded,
+                    selected: currentIndex == 2,
+                    onTap: () => context.go('/search'),
+                  ),
+                  _NavItem(
+                    label: 'Profile',
+                    icon: Icons.person_rounded,
+                    selected: currentIndex == 3,
+                    onTap: () => context.go('/profile'),
+                  ),
+                ],
               ),
             ),
           ),
-          _NavItem(
-            label: 'Search',
-            icon: Icons.search_rounded,
-            selected: currentIndex == 2,
-            onTap: () => context.go('/search'),
-          ),
-          _NavItem(
-            label: 'Profile',
-            icon: Icons.person_rounded,
-            selected: currentIndex == 3,
-            onTap: () => context.go('/profile'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -132,13 +157,25 @@ class _NavItem extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 4),
-            Text(label, style: ShayaTextStyles.metadata.copyWith(color: color)),
-          ],
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? Colors.white.withValues(alpha: 0.06) : null,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: ShayaTextStyles.metadata.copyWith(color: color),
+              ),
+            ],
+          ),
         ),
       ),
     );

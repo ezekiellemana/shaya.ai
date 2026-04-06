@@ -7,6 +7,7 @@ import 'package:shaya_ai/core/providers.dart';
 import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -39,53 +40,96 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Language',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                ShayaSurfaceCard(
+                  showGlow: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const ShayaSectionHeader(
+                        title: 'Preferences',
+                        subtitle:
+                            'Tune the app language and notification behavior without affecting your saved data.',
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Language',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 10),
+                      SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(
+                            value: 'English',
+                            label: Text('English'),
+                          ),
+                          ButtonSegment(
+                            value: 'Swahili',
+                            label: Text('Swahili'),
+                          ),
+                        ],
+                        selected: {_language},
+                        onSelectionChanged: (selection) async {
+                          setState(() => _language = selection.first);
+                          await ref
+                              .read(secureStoreProvider)
+                              .saveAppLanguage(_language);
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      ShayaSurfaceCard(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        radius: 18,
+                        child: SwitchListTile(
+                          value: _notificationsEnabled,
+                          onChanged: (value) async {
+                            setState(() => _notificationsEnabled = value);
+                            await ref
+                                .read(secureStoreProvider)
+                                .saveNotificationsEnabled(value);
+                          },
+                          title: const Text('Notifications'),
+                          subtitle: const Text(
+                            'Keep alerts for generation updates and account events.',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'English', label: Text('English')),
-                    ButtonSegment(value: 'Swahili', label: Text('Swahili')),
-                  ],
-                  selected: {_language},
-                  onSelectionChanged: (selection) async {
-                    setState(() => _language = selection.first);
-                    await ref
-                        .read(secureStoreProvider)
-                        .saveAppLanguage(_language);
-                  },
-                ),
-                const SizedBox(height: 20),
-                SwitchListTile(
-                  value: _notificationsEnabled,
-                  onChanged: (value) async {
-                    setState(() => _notificationsEnabled = value);
-                    await ref
-                        .read(secureStoreProvider)
-                        .saveNotificationsEnabled(value);
-                  },
-                  title: const Text('Notifications'),
-                ),
-                const SizedBox(height: 20),
-                SecondaryOutlineButton(
-                  label: 'Export my data',
-                  icon: Icons.ios_share_rounded,
-                  onPressed: session.isBusy ? null : _exportData,
-                ),
-                const SizedBox(height: 12),
-                DangerOutlineButton(
-                  label: session.isBusy
-                      ? 'Deleting account...'
-                      : 'Delete account',
-                  onPressed: session.isBusy ? null : _deleteAccount,
-                ),
-                const SizedBox(height: 12),
-                PrimaryGradientButton(
-                  label: 'Logout',
-                  onPressed: session.isBusy ? null : _logout,
-                  isBusy: session.isBusy,
+                const SizedBox(height: 18),
+                ShayaSurfaceCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const ShayaSectionHeader(
+                        title: 'Data and account',
+                        subtitle:
+                            'Export your data, sign out safely, or permanently delete your account.',
+                      ),
+                      const SizedBox(height: 16),
+                      SecondaryOutlineButton(
+                        label: 'Export my data',
+                        icon: Icons.ios_share_rounded,
+                        onPressed: session.isBusy ? null : _exportData,
+                      ),
+                      const SizedBox(height: 12),
+                      DangerOutlineButton(
+                        label: session.isBusy
+                            ? 'Deleting account...'
+                            : 'Delete account',
+                        onPressed: session.isBusy ? null : _deleteAccount,
+                      ),
+                      const SizedBox(height: 12),
+                      PrimaryGradientButton(
+                        label: 'Logout',
+                        onPressed: session.isBusy ? null : _logout,
+                        isBusy: session.isBusy,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -199,20 +243,30 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'This permanently removes your profile, playlists, saved lyrics, quota history, and avatar from Shaya AI.',
-              style: ShayaTextStyles.body,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Type DELETE to confirm this action.',
-              style: ShayaTextStyles.metadata,
+            ShayaSurfaceCard(
+              padding: const EdgeInsets.all(16),
+              borderColor: kDanger.withValues(alpha: 0.20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'This permanently removes your profile, playlists, saved lyrics, quota history, and avatar from Shaya AI.',
+                    style: ShayaTextStyles.body,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Type DELETE to confirm this action.',
+                    style: ShayaTextStyles.metadata,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             ShayaTextField(
               controller: _confirmationController,
               label: 'Confirmation',
               hint: 'Type DELETE',
+              prefixIcon: Icons.warning_amber_rounded,
             ),
             if (widget.requiresPassword) ...[
               const SizedBox(height: 12),
@@ -226,6 +280,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                 label: 'Current password',
                 hint: 'Required for email accounts',
                 obscureText: true,
+                prefixIcon: Icons.lock_outline_rounded,
               ),
             ],
             if (_errorText != null) ...[

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shaya_ai/core/providers.dart';
+import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
@@ -31,17 +33,36 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       subtitle: 'We will email a single-use reset link.',
       child: Column(
         children: [
-          ShayaTextField(
-            controller: _emailController,
-            label: 'Email',
-            hint: 'you@example.com',
-            keyboardType: TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 20),
-          PrimaryGradientButton(
-            label: 'Send reset link',
-            isBusy: session.isBusy,
-            onPressed: _sendReset,
+          ShayaSurfaceCard(
+            showGlow: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Secure account recovery',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Use the email linked to your account and we will send a reset link.',
+                  style: ShayaTextStyles.metadata,
+                ),
+                const SizedBox(height: 20),
+                ShayaTextField(
+                  controller: _emailController,
+                  label: 'Email',
+                  hint: 'you@example.com',
+                  keyboardType: TextInputType.emailAddress,
+                  prefixIcon: Icons.mail_outline_rounded,
+                ),
+                const SizedBox(height: 20),
+                PrimaryGradientButton(
+                  label: 'Send reset link',
+                  isBusy: session.isBusy,
+                  onPressed: _sendReset,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           TextButton(

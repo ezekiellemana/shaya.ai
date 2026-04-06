@@ -7,6 +7,7 @@ import 'package:shaya_ai/shared/models/song.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/song_card.dart';
 
 class PlaylistScreen extends ConsumerWidget {
@@ -26,7 +27,10 @@ class PlaylistScreen extends ConsumerWidget {
         if (playlist == null) {
           return const ShayaScreenScaffold(
             title: 'Playlist',
-            child: AsyncStateView(message: 'Playlist not found.'),
+            child: AsyncStateView(
+              title: 'Playlist not found',
+              message: 'This collection is no longer available.',
+            ),
           );
         }
 
@@ -48,88 +52,108 @@ class PlaylistScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PrimaryGradientButton(
-                          label: 'Play all',
-                          onPressed: playlistSongs.isEmpty
-                              ? null
-                              : () async {
-                                  await ref
-                                      .read(playerControllerProvider)
-                                      .loadSong(
-                                        playlistSongs.first,
-                                        queue: playlistSongs,
-                                      );
-                                  if (!context.mounted) {
-                                    return;
-                                  }
-                                  await context.push('/player');
-                                },
+                  ShayaSurfaceCard(
+                    showGlow: true,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ShayaSectionHeader(
+                          title: 'Playlist controls',
+                          subtitle:
+                              'Play, shuffle, manage songs, or refine the playlist details.',
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: SecondaryOutlineButton(
-                          label: 'Shuffle',
-                          icon: Icons.shuffle_rounded,
-                          onPressed: playlistSongs.isEmpty
-                              ? null
-                              : () async {
-                                  final shuffled = <Song>[...playlistSongs]
-                                    ..shuffle();
-                                  await ref
-                                      .read(playerControllerProvider)
-                                      .loadSong(
-                                        shuffled.first,
-                                        queue: shuffled,
-                                      );
-                                  if (!context.mounted) {
-                                    return;
-                                  }
-                                  await context.push('/player');
-                                },
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: PrimaryGradientButton(
+                                label: 'Play all',
+                                onPressed: playlistSongs.isEmpty
+                                    ? null
+                                    : () async {
+                                        await ref
+                                            .read(playerControllerProvider)
+                                            .loadSong(
+                                              playlistSongs.first,
+                                              queue: playlistSongs,
+                                            );
+                                        if (!context.mounted) {
+                                          return;
+                                        }
+                                        await context.push('/player');
+                                      },
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: SecondaryOutlineButton(
+                                label: 'Shuffle',
+                                icon: Icons.shuffle_rounded,
+                                onPressed: playlistSongs.isEmpty
+                                    ? null
+                                    : () async {
+                                        final shuffled = <Song>[
+                                          ...playlistSongs,
+                                        ]..shuffle();
+                                        await ref
+                                            .read(playerControllerProvider)
+                                            .loadSong(
+                                              shuffled.first,
+                                              queue: shuffled,
+                                            );
+                                        if (!context.mounted) {
+                                          return;
+                                        }
+                                        await context.push('/player');
+                                      },
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            TextButton.icon(
+                              onPressed: () =>
+                                  _manageSongs(context, ref, playlist, songs),
+                              icon: const Icon(Icons.playlist_add_rounded),
+                              label: const Text('Add songs'),
+                            ),
+                            TextButton.icon(
+                              onPressed: () => _renamePlaylist(
+                                context,
+                                ref,
+                                playlist.id,
+                                playlist.name,
+                              ),
+                              icon: const Icon(Icons.edit_rounded),
+                              label: const Text('Rename'),
+                            ),
+                            TextButton.icon(
+                              onPressed: () =>
+                                  _deletePlaylist(context, ref, playlist.id),
+                              icon: const Icon(Icons.delete_outline_rounded),
+                              label: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      TextButton(
-                        onPressed: () =>
-                            _manageSongs(context, ref, playlist, songs),
-                        child: const Text('Add songs'),
-                      ),
-                      TextButton(
-                        onPressed: () => _renamePlaylist(
-                          context,
-                          ref,
-                          playlist.id,
-                          playlist.name,
-                        ),
-                        child: const Text('Rename'),
-                      ),
-                      TextButton(
-                        onPressed: () =>
-                            _deletePlaylist(context, ref, playlist.id),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 18),
                   if (songs.isEmpty)
                     AsyncStateView(
+                      title: 'Library is empty',
                       message:
-                          'Your library is empty right now. Add songs, videos, or lyrics first, then build playlists.',
+                          'Add songs, videos, or lyrics first, then build playlists.',
                       actionLabel: 'Back to library',
                       onAction: () => context.go('/library'),
                     )
                   else if (playlistSongs.isEmpty)
                     AsyncStateView(
+                      title: 'No tracks yet',
                       message:
                           'Add songs from your library to populate this playlist.',
                       actionLabel: 'Add songs',
@@ -137,61 +161,89 @@ class PlaylistScreen extends ConsumerWidget {
                           _manageSongs(context, ref, playlist, songs),
                     )
                   else
-                    ReorderableListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: playlistSongs.length,
-                      onReorder: (oldIndex, newIndex) async {
-                        final ordered = [...playlist.songIds];
-                        if (newIndex > oldIndex) {
-                          newIndex -= 1;
-                        }
-                        final moved = ordered.removeAt(oldIndex);
-                        ordered.insert(newIndex, moved);
-                        await ref
-                            .read(playlistsRepositoryProvider)
-                            .updateSongOrder(playlist.id, ordered);
-                        ref.invalidate(playlistsProvider);
-                      },
-                      itemBuilder: (context, index) {
-                        final song = playlistSongs[index];
-                        return Padding(
-                          key: ValueKey(song.id),
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: SongCard(
-                            song: song,
-                            onTap: () async {
-                              await ref
-                                  .read(playerControllerProvider)
-                                  .loadSong(song, queue: playlistSongs);
-                              if (!context.mounted) {
-                                return;
-                              }
-                              await context.push('/player');
-                            },
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  tooltip: 'Remove from playlist',
-                                  onPressed: () =>
-                                      _removeSong(context, ref, playlist, song),
-                                  icon: const Icon(
-                                    Icons.remove_circle_outline_rounded,
-                                  ),
-                                ),
-                                ReorderableDragStartListener(
-                                  index: index,
-                                  child: const Padding(
-                                    padding: EdgeInsets.only(right: 4),
-                                    child: Icon(Icons.drag_handle_rounded),
-                                  ),
-                                ),
-                              ],
-                            ),
+                    ShayaSurfaceCard(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const ShayaSectionHeader(
+                            title: 'Track order',
+                            subtitle:
+                                'Drag handles to refine sequence without changing playback logic.',
                           ),
-                        );
-                      },
+                          const SizedBox(height: 12),
+                          ReorderableListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: playlistSongs.length,
+                            onReorder: (oldIndex, newIndex) async {
+                              final ordered = [...playlist.songIds];
+                              if (newIndex > oldIndex) {
+                                newIndex -= 1;
+                              }
+                              final moved = ordered.removeAt(oldIndex);
+                              ordered.insert(newIndex, moved);
+                              await ref
+                                  .read(playlistsRepositoryProvider)
+                                  .updateSongOrder(playlist.id, ordered);
+                              ref.invalidate(playlistsProvider);
+                            },
+                            itemBuilder: (context, index) {
+                              final song = playlistSongs[index];
+                              return Padding(
+                                key: ValueKey(song.id),
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: SongCard(
+                                  song: song,
+                                  onTap: () async {
+                                    await ref
+                                        .read(playerControllerProvider)
+                                        .loadSong(song, queue: playlistSongs);
+                                    if (!context.mounted) {
+                                      return;
+                                    }
+                                    await context.push('/player');
+                                  },
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: 'Remove from playlist',
+                                        onPressed: () => _removeSong(
+                                          context,
+                                          ref,
+                                          playlist,
+                                          song,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.remove_circle_outline_rounded,
+                                        ),
+                                      ),
+                                      ReorderableDragStartListener(
+                                        index: index,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.06,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.drag_handle_rounded,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                 ],
               ),
@@ -203,7 +255,11 @@ class PlaylistScreen extends ConsumerWidget {
           ),
           error: (error, _) => ShayaScreenScaffold(
             title: 'Playlist',
-            child: AsyncStateView(message: error.toString()),
+            child: AsyncStateView(
+              title: 'Playlist unavailable',
+              message: error.toString(),
+              tone: ShayaStateTone.error,
+            ),
           ),
         );
       },
@@ -213,7 +269,11 @@ class PlaylistScreen extends ConsumerWidget {
       ),
       error: (error, _) => ShayaScreenScaffold(
         title: 'Playlist',
-        child: AsyncStateView(message: error.toString()),
+        child: AsyncStateView(
+          title: 'Playlists unavailable',
+          message: 'The playlist list could not be loaded right now.',
+          tone: ShayaStateTone.error,
+        ),
       ),
     );
   }
@@ -242,14 +302,10 @@ class PlaylistScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Choose songs for ${playlist.name}',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Selected songs stay in their current order. New songs are appended.',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    ShayaSectionHeader(
+                      title: 'Choose songs for ${playlist.name}',
+                      subtitle:
+                          'Selected songs stay in their current order. New songs are appended.',
                     ),
                     const SizedBox(height: 16),
                     ConstrainedBox(
@@ -262,25 +318,34 @@ class PlaylistScreen extends ConsumerWidget {
                         itemBuilder: (context, index) {
                           final song = songs[index];
                           final selected = selectedIds.contains(song.id);
-                          return CheckboxListTile(
-                            value: selected,
-                            contentPadding: EdgeInsets.zero,
-                            activeColor: const Color(0xFF9F67FF),
-                            title: Text(song.title),
-                            subtitle: Text(
-                              song.genre.isEmpty
-                                  ? 'AI composition'
-                                  : song.genre.join(' / '),
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: ShayaSurfaceCard(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              child: CheckboxListTile(
+                                value: selected,
+                                contentPadding: EdgeInsets.zero,
+                                activeColor: const Color(0xFF9F67FF),
+                                title: Text(song.title),
+                                subtitle: Text(
+                                  song.genre.isEmpty
+                                      ? 'AI composition'
+                                      : song.genre.join(' / '),
+                                ),
+                                onChanged: (value) {
+                                  setModalState(() {
+                                    if (value ?? false) {
+                                      selectedIds.add(song.id);
+                                    } else {
+                                      selectedIds.remove(song.id);
+                                    }
+                                  });
+                                },
+                              ),
                             ),
-                            onChanged: (value) {
-                              setModalState(() {
-                                if (value ?? false) {
-                                  selectedIds.add(song.id);
-                                } else {
-                                  selectedIds.remove(song.id);
-                                }
-                              });
-                            },
                           );
                         },
                       ),
@@ -339,7 +404,10 @@ class PlaylistScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Rename playlist'),
-        content: TextField(controller: controller),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'New playlist name'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

@@ -6,9 +6,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shaya_ai/core/providers.dart';
 import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/models/user_profile.dart';
+import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/quota_bar.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -37,93 +39,137 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           final stats = statsAsync.value;
           final quota = quotaAsync.value;
           if (profile == null) {
-            return const Text('Sign in to view your profile.');
+            return const AsyncStateView(
+              title: 'Profile unavailable',
+              message: 'Sign in to view your profile.',
+            );
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ProfileAvatar(
-                    profile: profile,
-                    busy: _isUpdatingAvatar,
-                    onTap: _isUpdatingAvatar
-                        ? null
-                        : () => _pickAvatar(profile),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          profile.displayName,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text('Plan: ${profile.subscriptionTier.label}'),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: [
-                            TextButton.icon(
-                              onPressed: _isSavingName
-                                  ? null
-                                  : () => _renameProfile(profile.displayName),
-                              icon: _isSavingName
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.edit_rounded),
-                              label: const Text('Edit name'),
-                            ),
-                            TextButton.icon(
-                              onPressed: _isUpdatingAvatar
-                                  ? null
-                                  : () => _pickAvatar(profile),
-                              icon: _isUpdatingAvatar
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.photo_library_rounded),
-                              label: const Text('Change photo'),
-                            ),
-                          ],
-                        ),
-                      ],
+              ShayaSurfaceCard(
+                showGlow: true,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ProfileAvatar(
+                      profile: profile,
+                      busy: _isUpdatingAvatar,
+                      onTap: _isUpdatingAvatar
+                          ? null
+                          : () => _pickAvatar(profile),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            profile.displayName,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Creative profile',
+                            style: ShayaTextStyles.metadata,
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              color: kPrimaryPurple.withValues(alpha: 0.16),
+                              border: Border.all(
+                                color: kPrimaryPurple.withValues(alpha: 0.18),
+                              ),
+                            ),
+                            child: Text(
+                              'Plan: ${profile.subscriptionTier.label}',
+                              style: ShayaTextStyles.tag.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              TextButton.icon(
+                                onPressed: _isSavingName
+                                    ? null
+                                    : () => _renameProfile(profile.displayName),
+                                icon: _isSavingName
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.edit_rounded),
+                                label: const Text('Edit name'),
+                              ),
+                              TextButton.icon(
+                                onPressed: _isUpdatingAvatar
+                                    ? null
+                                    : () => _pickAvatar(profile),
+                                icon: _isUpdatingAvatar
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.photo_library_rounded),
+                                label: const Text('Change photo'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
+              const ShayaSectionHeader(
+                title: 'Creative output',
+                subtitle: 'A quick snapshot of what you have produced so far.',
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   _StatTile(
                     label: 'Songs',
                     value: '${stats?.songsGenerated ?? 0}',
+                    icon: Icons.music_note_rounded,
                   ),
                   _StatTile(
                     label: 'Videos',
                     value: '${stats?.videosGenerated ?? 0}',
+                    icon: Icons.movie_creation_outlined,
                   ),
                   _StatTile(
                     label: 'Lyrics',
                     value: '${stats?.lyricsGenerated ?? 0}',
+                    icon: Icons.lyrics_rounded,
+                    removeRightMargin: true,
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               if (quota != null) ...[
+                const ShayaSectionHeader(
+                  title: 'Plan usage',
+                  subtitle:
+                      'Monthly limits refresh according to your subscription tier.',
+                ),
+                const SizedBox(height: 12),
                 QuotaBar(
                   label: 'Songs',
                   used: quota.songsGenerated,
@@ -143,21 +189,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 const SizedBox(height: 18),
               ],
-              PrimaryGradientButton(
-                label: 'Upgrade plan',
-                onPressed: () => context.push('/subscription'),
-              ),
-              const SizedBox(height: 10),
-              SecondaryOutlineButton(
-                label: 'Settings',
-                icon: Icons.settings_rounded,
-                onPressed: () => context.push('/settings'),
+              ShayaSurfaceCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const ShayaSectionHeader(
+                      title: 'Account actions',
+                      subtitle: 'Manage your plan and app-level settings.',
+                    ),
+                    const SizedBox(height: 16),
+                    PrimaryGradientButton(
+                      label: 'Upgrade plan',
+                      onPressed: () => context.push('/subscription'),
+                    ),
+                    const SizedBox(height: 10),
+                    SecondaryOutlineButton(
+                      label: 'Settings',
+                      icon: Icons.settings_rounded,
+                      onPressed: () => context.push('/settings'),
+                    ),
+                  ],
+                ),
               ),
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Text(error.toString()),
+        error: (error, _) => AsyncStateView(
+          title: 'Profile unavailable',
+          message: error.toString(),
+          tone: ShayaStateTone.error,
+        ),
       ),
     );
   }
@@ -168,7 +230,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit name'),
-        content: TextField(controller: controller),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Your display name'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -263,8 +328,8 @@ class _ProfileAvatar extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             onTap: onTap,
             child: Container(
-              width: 80,
-              height: 80,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: profile.photoUrl == null
@@ -276,13 +341,20 @@ class _ProfileAvatar extends StatelessWidget {
                     ? null
                     : Colors.white.withValues(alpha: 0.06),
                 border: Border.all(color: kPurpleLight.withValues(alpha: 0.35)),
+                boxShadow: [
+                  BoxShadow(
+                    color: kPrimaryPurple.withValues(alpha: 0.25),
+                    blurRadius: 24,
+                    offset: const Offset(0, 14),
+                  ),
+                ],
               ),
               child: ClipOval(
                 child: profile.photoUrl == null
                     ? const Icon(
                         Icons.person_rounded,
                         color: Colors.white,
-                        size: 36,
+                        size: 40,
                       )
                     : CachedNetworkImage(
                         imageUrl: profile.photoUrl!,
@@ -304,11 +376,11 @@ class _ProfileAvatar extends StatelessWidget {
           ),
         ),
         Positioned(
-          right: -4,
+          right: 0,
           bottom: -4,
           child: Container(
-            width: 30,
-            height: 30,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.black,
@@ -316,7 +388,7 @@ class _ProfileAvatar extends StatelessWidget {
             ),
             child: busy
                 ? const Padding(
-                    padding: EdgeInsets.all(7),
+                    padding: EdgeInsets.all(8),
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.edit_rounded, size: 16, color: Colors.white),
@@ -328,28 +400,35 @@ class _ProfileAvatar extends StatelessWidget {
 }
 
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.label, required this.value});
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.removeRightMargin = false,
+  });
 
   final String label;
   final String value;
+  final IconData icon;
+  final bool removeRightMargin;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value, style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 6),
-            Text(label),
-          ],
+        margin: EdgeInsets.only(right: removeRightMargin ? 0 : 8),
+        child: ShayaSurfaceCard(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: kPurpleLight, size: 20),
+              const SizedBox(height: 14),
+              Text(value, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 4),
+              Text(label, style: ShayaTextStyles.metadata),
+            ],
+          ),
         ),
       ),
     );

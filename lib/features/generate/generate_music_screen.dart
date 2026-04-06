@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shaya_ai/core/app_constants.dart';
 import 'package:shaya_ai/core/providers.dart';
-import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/models/subscription_tier.dart';
 import 'package:shaya_ai/shared/widgets/quota_bar.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_chip.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 
 class GenerateMusicScreen extends ConsumerStatefulWidget {
@@ -59,42 +59,71 @@ class _GenerateMusicScreenState extends ConsumerState<GenerateMusicScreen> {
             ),
             const SizedBox(height: 18),
           ],
-          ShayaTextField(
-            controller: _promptController,
-            label: 'Prompt',
-            hint:
-                'Example: Inspirational Bongo Flava anthem for sunrise in Dodoma',
-            maxLines: 5,
-          ),
-          const SizedBox(height: 18),
-          Text('Style tags', style: ShayaTextStyles.title),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: AppConstants.genreTags.map((tag) {
-              return ShayaChip(
-                label: tag,
-                selected: controller.selectedTags.contains(tag),
-                onTap: () =>
-                    ref.read(generateMusicControllerProvider).toggleTag(tag),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 18),
-          ShayaTextField(
-            controller: _customTagsController,
-            label: 'Custom tags',
-            hint: 'Comma-separated tags',
-          ),
-          const SizedBox(height: 18),
-          if (controller.errorMessage != null) ...[
-            Text(
-              controller.errorMessage!,
-              style: ShayaTextStyles.body.copyWith(color: kDanger),
+          ShayaSurfaceCard(
+            showGlow: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShayaSectionHeader(
+                  title: 'Prompt',
+                  subtitle:
+                      'Describe the vibe, tempo, story, and instrumentation you want.',
+                ),
+                const SizedBox(height: 16),
+                ShayaTextField(
+                  controller: _promptController,
+                  label: 'Creative brief',
+                  hint:
+                      'Example: Inspirational Bongo Flava anthem for sunrise in Dodoma',
+                  maxLines: 5,
+                  prefixIcon: Icons.edit_note_rounded,
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+          ),
+          const SizedBox(height: 16),
+          ShayaSurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShayaSectionHeader(
+                  title: 'Style tags',
+                  subtitle:
+                      'Mix structured genres with your own creative language.',
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: AppConstants.genreTags.map((tag) {
+                    return ShayaChip(
+                      label: tag,
+                      selected: controller.selectedTags.contains(tag),
+                      onTap: () => ref
+                          .read(generateMusicControllerProvider)
+                          .toggleTag(tag),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                ShayaTextField(
+                  controller: _customTagsController,
+                  label: 'Custom tags',
+                  hint: 'Comma-separated tags',
+                  prefixIcon: Icons.tune_rounded,
+                ),
+              ],
+            ),
+          ),
+          if (controller.errorMessage != null) ...[
+            const SizedBox(height: 16),
+            ShayaStateCard(
+              title: 'Generation blocked',
+              message: controller.errorMessage!,
+              tone: ShayaStateTone.error,
+            ),
           ],
+          const SizedBox(height: 18),
           PrimaryGradientButton(
             label: 'Generate',
             icon: Icons.auto_awesome_rounded,

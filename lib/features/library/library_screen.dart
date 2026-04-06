@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shaya_ai/core/providers.dart';
+import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/models/playlist.dart';
 import 'package:shaya_ai/shared/models/song.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/shaya_chip.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/song_card.dart';
 
 enum _LibraryTab { songs, videos, lyrics }
@@ -35,64 +37,104 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _tabChip('Songs', _LibraryTab.songs),
-              _tabChip('Videos', _LibraryTab.videos),
-              _tabChip('Lyrics', _LibraryTab.lyrics),
-            ],
+          ShayaSurfaceCard(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.auto_awesome_motion_rounded,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Keep your music, video, and lyric drafts organized in one premium workspace.',
+                    style: ShayaTextStyles.body,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          ShayaSurfaceCard(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShayaSectionHeader(
+                  title: 'Media filter',
+                  subtitle: 'Switch views without losing your saved items.',
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _tabChip('Songs', _LibraryTab.songs),
+                    _tabChip('Videos', _LibraryTab.videos),
+                    _tabChip('Lyrics', _LibraryTab.lyrics),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 18),
           playlistsAsync.when(
             data: (items) => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Playlists',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    TextButton(
-                      onPressed: () => _createPlaylist(),
-                      child: const Text('Create'),
-                    ),
-                  ],
+                ShayaSectionHeader(
+                  title: 'Playlists',
+                  subtitle: 'Curate listening queues and reusable collections.',
+                  action: TextButton(
+                    onPressed: () => _createPlaylist(),
+                    child: const Text('Create'),
+                  ),
                 ),
+                const SizedBox(height: 12),
                 if (items.isEmpty)
                   AsyncStateView(
+                    title: 'No playlists yet',
                     message:
-                        'No playlists yet. Create one to group tracks, videos, and lyric drafts.',
+                        'Create one to group tracks, videos, and lyric drafts.',
                     actionLabel: 'Create playlist',
                     onAction: () => _createPlaylist(),
                   )
                 else
                   Column(
-                    children: items
-                        .map(
-                          (playlist) => ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(playlist.name),
-                            subtitle: Text('${playlist.songIds.length} tracks'),
-                            trailing: const Icon(
-                              Icons.chevron_right_rounded,
-                              color: Colors.white70,
-                            ),
-                            onTap: () =>
-                                context.push('/playlist/${playlist.id}'),
-                          ),
-                        )
-                        .toList(),
+                    children: items.map((playlist) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _PlaylistLibraryCard(
+                          playlist: playlist,
+                          onTap: () => context.push('/playlist/${playlist.id}'),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
               ],
             ),
-            loading: () => const CircularProgressIndicator(),
-            error: (_, _) => const SizedBox.shrink(),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => AsyncStateView(
+              title: 'Playlists unavailable',
+              message: error.toString(),
+              tone: ShayaStateTone.error,
+            ),
           ),
+          ShayaSectionHeader(
+            title: switch (_tab) {
+              _LibraryTab.songs => 'Songs',
+              _LibraryTab.videos => 'Videos',
+              _LibraryTab.lyrics => 'Lyrics',
+            },
+            subtitle: switch (_tab) {
+              _LibraryTab.songs => 'Tracks with playable audio.',
+              _LibraryTab.videos => 'Songs that already include video.',
+              _LibraryTab.lyrics => 'Songs that contain saved lyric sections.',
+            },
+          ),
+          const SizedBox(height: 12),
           songsAsync.when(
             data: (songs) {
               final filtered = switch (_tab) {
@@ -105,16 +147,21 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               };
 
               if (filtered.isEmpty) {
-                return const AsyncStateView(
+                return AsyncStateView(
+                  title: 'Nothing in this view yet',
                   message:
-                      'Nothing here yet. Generate your first track or lyrics to fill the library.',
+                      'Generate your first ${switch (_tab) {
+                        _LibraryTab.songs => 'track',
+                        _LibraryTab.videos => 'video',
+                        _LibraryTab.lyrics => 'lyric draft',
+                      }} to fill this section.',
                 );
               }
 
               return Column(
                 children: filtered.map((song) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: SongCard(
                       song: song,
                       onTap: () => _playSong(song, filtered),
@@ -138,7 +185,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           ),
                         ],
                         icon: const Icon(
-                          Icons.more_vert_rounded,
+                          Icons.more_horiz_rounded,
                           color: Colors.white70,
                         ),
                       ),
@@ -148,7 +195,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => AsyncStateView(message: error.toString()),
+            error: (error, _) => AsyncStateView(
+              title: 'Library unavailable',
+              message: error.toString(),
+              tone: ShayaStateTone.error,
+            ),
           ),
         ],
       ),
@@ -175,7 +226,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Create playlist'),
-          content: TextField(controller: controller),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: 'Late Night Bongo Mix'),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -322,20 +376,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Add "${song.title}" to a playlist',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap a playlist to add or remove this song.',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    ShayaSectionHeader(
+                      title: 'Add "${song.title}"',
+                      subtitle: 'Tap a playlist to add or remove this song.',
                     ),
                     const SizedBox(height: 16),
                     if (mutablePlaylists.isEmpty)
                       AsyncStateView(
+                        title: 'Create your first playlist',
                         message:
-                            'Create your first playlist to organize songs, videos, and lyric drafts.',
+                            'Start organizing songs, videos, and lyric drafts in curated collections.',
                         actionLabel: 'Create playlist',
                         onAction: () async {
                           Navigator.of(sheetContext).pop();
@@ -354,18 +404,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           shrinkWrap: true,
                           itemCount: mutablePlaylists.length + 1,
                           separatorBuilder: (_, _) =>
-                              const Divider(height: 1, color: Colors.white12),
+                              const SizedBox(height: 10),
                           itemBuilder: (context, index) {
                             if (index == 0) {
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: const Icon(
-                                  Icons.add_circle_outline_rounded,
-                                ),
-                                title: const Text('Create new playlist'),
-                                subtitle: const Text(
-                                  'Create a playlist and add this song immediately.',
-                                ),
+                              return ShayaSurfaceCard(
                                 onTap: () async {
                                   Navigator.of(sheetContext).pop();
                                   await _createPlaylist(
@@ -373,6 +415,43 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                     openAfterCreate: false,
                                   );
                                 },
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: kPrimaryPurple.withValues(
+                                          alpha: 0.16,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.add_rounded,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Create new playlist',
+                                            style: ShayaTextStyles.songName,
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Create one and add this song immediately.',
+                                            style: ShayaTextStyles.metadata,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               );
                             }
 
@@ -381,34 +460,72 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               song.id,
                             );
                             final busy = busyIds.contains(playlist.id);
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
+                            return ShayaSurfaceCard(
                               onTap: busy
                                   ? null
                                   : () => togglePlaylist(playlist),
-                              leading: Icon(
-                                containsSong
-                                    ? Icons.check_circle_rounded
-                                    : Icons.queue_music_rounded,
-                                color: containsSong
-                                    ? const Color(0xFF9F67FF)
-                                    : Colors.white70,
-                              ),
-                              title: Text(playlist.name),
-                              subtitle: Text(
-                                '${playlist.songIds.length} tracks',
-                              ),
-                              trailing: busy
-                                  ? const SizedBox(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: containsSong
+                                          ? kPrimaryPurple.withValues(
+                                              alpha: 0.18,
+                                            )
+                                          : Colors.white.withValues(
+                                              alpha: 0.06,
+                                            ),
+                                    ),
+                                    child: Icon(
+                                      containsSong
+                                          ? Icons.check_circle_rounded
+                                          : Icons.queue_music_rounded,
+                                      color: containsSong
+                                          ? kPurpleLight
+                                          : Colors.white70,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          playlist.name,
+                                          style: ShayaTextStyles.songName,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${playlist.songIds.length} tracks',
+                                          style: ShayaTextStyles.metadata,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (busy)
+                                    const SizedBox(
                                       width: 18,
                                       height: 18,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : containsSong
-                                  ? const Text('Added')
-                                  : const Text('Add'),
+                                  else
+                                    Text(
+                                      containsSong ? 'Added' : 'Add',
+                                      style: ShayaTextStyles.metadata.copyWith(
+                                        color: containsSong
+                                            ? kPurpleLight
+                                            : Colors.white70,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             );
                           },
                         ),
@@ -420,6 +537,49 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           },
         );
       },
+    );
+  }
+}
+
+class _PlaylistLibraryCard extends StatelessWidget {
+  const _PlaylistLibraryCard({required this.playlist, required this.onTap});
+
+  final Playlist playlist;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShayaSurfaceCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: kGradCard,
+            ),
+            child: const Icon(Icons.queue_music_rounded, color: Colors.white),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(playlist.name, style: ShayaTextStyles.songName),
+                const SizedBox(height: 4),
+                Text(
+                  '${playlist.songIds.length} tracks',
+                  style: ShayaTextStyles.metadata,
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: kPurpleLight),
+        ],
+      ),
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/widgets/shaya_buttons.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/shaya_text_field.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
@@ -30,22 +32,58 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'M-Pesa', label: Text('M-Pesa')),
-              ButtonSegment(value: 'Card', label: Text('Card')),
-              ButtonSegment(value: 'Airtel Money', label: Text('Airtel Money')),
-            ],
-            selected: {_method},
-            onSelectionChanged: (selection) {
-              setState(() => _method = selection.first);
-            },
+          ShayaSurfaceCard(
+            showGlow: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShayaSectionHeader(
+                  title: 'Payment method',
+                  subtitle:
+                      'Select the method you want to use when the final gateway is connected.',
+                ),
+                const SizedBox(height: 16),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'M-Pesa', label: Text('M-Pesa')),
+                    ButtonSegment(value: 'Card', label: Text('Card')),
+                    ButtonSegment(
+                      value: 'Airtel Money',
+                      label: Text('Airtel Money'),
+                    ),
+                  ],
+                  selected: {_method},
+                  onSelectionChanged: (selection) {
+                    setState(() => _method = selection.first);
+                  },
+                ),
+                const SizedBox(height: 16),
+                ShayaTextField(
+                  controller: _numberController,
+                  label: _method == 'Card' ? 'Card reference' : 'Phone number',
+                  hint: _method == 'Card' ? '4111 1111 1111 1111' : '+255...',
+                  prefixIcon: _method == 'Card'
+                      ? Icons.credit_card_rounded
+                      : Icons.phone_android_rounded,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          ShayaTextField(
-            controller: _numberController,
-            label: _method == 'Card' ? 'Card reference' : 'Phone number',
-            hint: _method == 'Card' ? '4111 1111 1111 1111' : '+255...',
+          const SizedBox(height: 18),
+          const ShayaSurfaceCard(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.lock_outline_rounded, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'This screen is intentionally a polished placeholder until the final billing gateway is connected in Phase 3.',
+                    style: ShayaTextStyles.body,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           PrimaryGradientButton(

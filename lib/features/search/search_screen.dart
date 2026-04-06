@@ -10,6 +10,7 @@ import 'package:shaya_ai/shared/models/song.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/shaya_chip.dart';
 import 'package:shaya_ai/shared/widgets/shaya_scaffold.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/song_card.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -40,34 +41,52 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
-            controller: _searchController,
-            onChanged: (value) => setState(() => _activeQuery = value),
-            style: ShayaTextStyles.body.copyWith(color: Colors.white),
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search_rounded),
-              hintText: 'Search your library and playlists',
-              suffixIcon: _activeQuery.trim().isEmpty
-                  ? null
-                  : IconButton(
-                      onPressed: _clearSearch,
-                      icon: const Icon(Icons.close_rounded),
-                    ),
+          ShayaSurfaceCard(
+            showGlow: true,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _activeQuery = value),
+              style: ShayaTextStyles.body.copyWith(color: Colors.white),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                prefixIcon: const Icon(Icons.search_rounded),
+                hintText: 'Search your library and playlists',
+                suffixIcon: _activeQuery.trim().isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: _clearSearch,
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+              ),
             ),
           ),
           const SizedBox(height: 18),
-          _QuickPickSection(
-            title: 'Genres',
-            items: AppConstants.genreTags,
-            activeQuery: _activeQuery,
-            onSelect: _selectQuery,
-          ),
-          const SizedBox(height: 16),
-          _QuickPickSection(
-            title: 'Moods',
-            items: AppConstants.moods,
-            activeQuery: _activeQuery,
-            onSelect: _selectQuery,
+          ShayaSurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShayaSectionHeader(
+                  title: 'Quick picks',
+                  subtitle:
+                      'Tap a genre or mood to jump straight into your catalog.',
+                ),
+                const SizedBox(height: 14),
+                _QuickPickSection(
+                  title: 'Genres',
+                  items: AppConstants.genreTags,
+                  activeQuery: _activeQuery,
+                  onSelect: _selectQuery,
+                ),
+                const SizedBox(height: 16),
+                _QuickPickSection(
+                  title: 'Moods',
+                  items: AppConstants.moods,
+                  activeQuery: _activeQuery,
+                  onSelect: _selectQuery,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           searchResultsAsync.when(
@@ -79,7 +98,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   _playSong(song, queue: queue, router: router),
             ),
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => AsyncStateView(message: error.toString()),
+            error: (error, _) => AsyncStateView(
+              title: 'Search unavailable',
+              message: error.toString(),
+              tone: ShayaStateTone.error,
+            ),
           ),
         ],
       ),
@@ -162,6 +185,7 @@ class _SearchResultsView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (results.isEmpty) {
       return AsyncStateView(
+        title: results.hasQuery ? 'No matches found' : 'Your catalog is empty',
         message: results.hasQuery
             ? 'No songs or playlists match "${results.query}".'
             : 'Nothing to search yet. Create songs, lyrics, or playlists and they will appear here.',
@@ -171,15 +195,29 @@ class _SearchResultsView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          results.hasQuery
-              ? 'Found ${results.playlists.length} playlists and ${results.songs.length} songs'
-              : 'Everything in your catalog',
-          style: ShayaTextStyles.metadata,
+        ShayaSurfaceCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              const Icon(Icons.travel_explore_rounded, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  results.hasQuery
+                      ? 'Found ${results.playlists.length} playlists and ${results.songs.length} songs'
+                      : 'Everything in your catalog',
+                  style: ShayaTextStyles.body,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 14),
         if (results.playlists.isNotEmpty) ...[
-          Text('Playlists', style: Theme.of(context).textTheme.headlineSmall),
+          const ShayaSectionHeader(
+            title: 'Playlists',
+            subtitle: 'Open collections directly from search results.',
+          ),
           const SizedBox(height: 10),
           Column(
             children: results.playlists.map((playlist) {
@@ -197,7 +235,10 @@ class _SearchResultsView extends StatelessWidget {
           const SizedBox(height: 14),
         ],
         if (results.songs.isNotEmpty) ...[
-          Text('Songs', style: Theme.of(context).textTheme.headlineSmall),
+          const ShayaSectionHeader(
+            title: 'Songs',
+            subtitle: 'Play search matches instantly from this list.',
+          ),
           const SizedBox(height: 10),
           Column(
             children: results.songs.map((song) {
@@ -230,57 +271,49 @@ class _PlaylistResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final preview = songs.take(2).map((song) => song.title).join(' / ');
-    return InkWell(
+    return ShayaSurfaceCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: kSurface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF220A3E), Color(0xFF0D1B3E)],
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF220A3E), Color(0xFF0D1B3E)],
+              ),
+            ),
+            child: const Icon(Icons.queue_music_rounded, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(playlist.name, style: ShayaTextStyles.songName),
+                const SizedBox(height: 4),
+                Text(
+                  '${playlist.songIds.length} tracks',
+                  style: ShayaTextStyles.metadata,
                 ),
-              ),
-              child: const Icon(Icons.queue_music_rounded, color: Colors.white),
+                const SizedBox(height: 8),
+                Text(
+                  preview.isEmpty ? 'No tracks added yet.' : preview,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: ShayaTextStyles.body.copyWith(fontSize: 12),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(playlist.name, style: ShayaTextStyles.songName),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${playlist.songIds.length} tracks',
-                    style: ShayaTextStyles.metadata,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    preview.isEmpty ? 'No tracks added yet.' : preview,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: ShayaTextStyles.body.copyWith(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: kPurpleLight,
-              size: 22,
-            ),
-          ],
-        ),
+          ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: kPurpleLight,
+            size: 22,
+          ),
+        ],
       ),
     );
   }

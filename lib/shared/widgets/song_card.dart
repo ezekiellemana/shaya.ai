@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/models/song.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 
 class SongCard extends StatelessWidget {
   const SongCard({super.key, required this.song, this.onTap, this.trailing});
@@ -12,76 +13,101 @@ class SongCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final contentType = song.hasVideo
+        ? 'Audio + video'
+        : song.contentKind == SongContentKind.lyrics
+        ? 'Lyrics draft'
+        : 'Audio track';
+
+    return ShayaSurfaceCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Ink(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: kSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                width: 58,
-                height: 58,
-                child: song.thumbnailUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: song.thumbnailUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, _, _) => _fallbackArt(),
-                      )
-                    : _fallbackArt(),
-              ),
+      radius: 22,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: SizedBox(
+              width: 68,
+              height: 68,
+              child: song.thumbnailUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: song.thumbnailUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, _, _) => _fallbackArt(),
+                    )
+                  : _fallbackArt(),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(song.title, style: ShayaTextStyles.songName),
-                  const SizedBox(height: 4),
-                  Text(
-                    song.genreSummary,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ShayaTextStyles.metadata,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    song.hasVideo
-                        ? 'Audio + video'
-                        : song.contentKind == SongContentKind.lyrics
-                        ? 'Lyrics draft'
-                        : 'Audio track',
-                    style: ShayaTextStyles.body.copyWith(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            trailing ??
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: kPurpleLight,
-                  size: 22,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(song.title, style: ShayaTextStyles.songName),
+                const SizedBox(height: 6),
+                Text(
+                  song.genreSummary,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ShayaTextStyles.metadata,
                 ),
-          ],
-        ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.06),
+                    ),
+                  ),
+                  child: Text(contentType, style: ShayaTextStyles.tag),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          trailing ??
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.06),
+                ),
+                child: const Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+        ],
       ),
     );
   }
 
   Widget _fallbackArt() {
     return DecoratedBox(
-      decoration: const BoxDecoration(gradient: kGradAccent),
-      child: const Icon(
-        Icons.music_note_rounded,
-        color: Colors.white,
-        size: 26,
+      decoration: const BoxDecoration(gradient: kGradCard),
+      child: Stack(
+        children: const [
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Icon(Icons.stars_rounded, color: Colors.white70, size: 16),
+          ),
+          Center(
+            child: Icon(
+              Icons.music_note_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+        ],
       ),
     );
   }

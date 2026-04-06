@@ -8,6 +8,7 @@ import 'package:shaya_ai/core/theme.dart';
 import 'package:shaya_ai/shared/models/song.dart';
 import 'package:shaya_ai/shared/widgets/async_state_view.dart';
 import 'package:shaya_ai/shared/widgets/shaya_chip.dart';
+import 'package:shaya_ai/shared/widgets/shaya_surfaces.dart';
 import 'package:shaya_ai/shared/widgets/song_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -32,6 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         body: SafeArea(
           bottom: false,
           child: ListView(
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             children: [
               Row(
@@ -50,16 +52,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Text(
                             'Habari, ${profile?.displayName ?? 'Creator'}',
                             style: ShayaTextStyles.display.copyWith(
-                              fontSize: 24,
+                              fontSize: 26,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             'Shape your next track or video.',
                             style: ShayaTextStyles.body,
                           ),
                         ],
                       ),
-                      loading: () => const CircularProgressIndicator(),
+                      loading: () => const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                       error: (_, _) => Text(
                         'Welcome to Shaya AI',
                         style: ShayaTextStyles.display.copyWith(fontSize: 24),
@@ -68,37 +75,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              GestureDetector(
+              const SizedBox(height: 20),
+              ShayaSurfaceCard(
                 onTap: () => context.go('/search'),
-                child: Container(
-                  height: 44,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: kPrimaryPurple.withValues(alpha: 0.25),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.search_rounded,
+                      color: kPurpleLight,
+                      size: 20,
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.search_rounded,
-                        color: kPurpleLight,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
                         'Search by title, mood, or genre',
                         style: ShayaTextStyles.body,
                       ),
-                    ],
-                  ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white70,
+                      size: 18,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 18),
-              Text("What's your mood?", style: ShayaTextStyles.title),
+              const SizedBox(height: 20),
+              const ShayaSectionHeader(
+                title: "What's your mood?",
+                subtitle:
+                    'Tune your home feed to the energy you want right now.',
+              ),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -121,9 +132,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => AsyncStateView(
+                  title: 'Unable to load the home feed',
                   message: error.toString(),
                   actionLabel: 'Retry',
                   onAction: () => ref.invalidate(homeFeedProvider),
+                  tone: ShayaStateTone.error,
                 ),
               ),
             ],
@@ -180,80 +193,89 @@ class _FeaturedHomeSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (featured != null) ...[
-          Text('Featured', style: ShayaTextStyles.title),
+          const ShayaSectionHeader(
+            title: 'Featured',
+            subtitle: 'A highlighted public release from the Shaya catalog.',
+          ),
           const SizedBox(height: 10),
-          InkWell(
-            borderRadius: BorderRadius.circular(14),
+          ShayaSurfaceCard(
             onTap: () => onPlaySong(featured, queue: displaySongs),
-            child: Ink(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: kGradCard,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: kPurpleLight.withValues(alpha: 0.30)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    featured.title,
-                    style: ShayaTextStyles.display.copyWith(fontSize: 24),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    featured.prompt,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: ShayaTextStyles.body,
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: featured.genre
-                        .map(
-                          (tag) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(tag, style: ShayaTextStyles.tag),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.play_circle_fill_rounded,
-                        color: Colors.white,
-                        size: 22,
+            showGlow: true,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF25104B), Color(0xFF102040)],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  featured.title,
+                  style: ShayaTextStyles.display.copyWith(fontSize: 26),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  featured.prompt,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: ShayaTextStyles.body,
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: featured.genre
+                      .map(
+                        (tag) =>
+                            ShayaChip(label: tag, selected: true, onTap: () {}),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: kGradAccent,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
                         'Play now',
                         style: ShayaTextStyles.body.copyWith(
                           color: Colors.white,
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                    Text(
+                      featured.hasVideo ? 'AUDIO + VIDEO' : 'AUDIO',
+                      style: ShayaTextStyles.tag.copyWith(
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
         ],
-        Text('Trending songs', style: ShayaTextStyles.title),
+        const ShayaSectionHeader(
+          title: 'Trending songs',
+          subtitle: 'Fresh public releases from the community catalog.',
+        ),
         const SizedBox(height: 10),
         if (songs.isEmpty)
           const AsyncStateView(
+            title: 'No public songs yet',
             message: 'No public playable songs are available yet.',
           )
         else ...[
@@ -292,12 +314,19 @@ class _HomeAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48,
-      height: 48,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: photoUrl == null ? kGradAccent : null,
         border: Border.all(color: kPurpleLight.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: kPrimaryPurple.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: ClipOval(
         child: photoUrl == null

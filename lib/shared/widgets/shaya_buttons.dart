@@ -17,20 +17,35 @@ class PrimaryGradientButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
     return SizedBox(
-      height: 48,
+      height: 54,
       width: double.infinity,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: onPressed == null ? null : kGradPrimary,
-          color: onPressed == null ? kSurface : null,
-          borderRadius: BorderRadius.circular(14),
+          gradient: isEnabled ? kGradPrimary : null,
+          color: isEnabled ? null : kSurfaceMuted,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isEnabled
+                ? Colors.white.withValues(alpha: 0.10)
+                : Colors.white.withValues(alpha: 0.05),
+          ),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: kPrimaryPurple.withValues(alpha: 0.26),
+                    blurRadius: 24,
+                    offset: const Offset(0, 14),
+                  ),
+                ]
+              : null,
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onPressed,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
             child: Center(
               child: isBusy
                   ? const SizedBox(
@@ -45,10 +60,7 @@ class PrimaryGradientButton extends StatelessWidget {
                           Icon(icon, color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                         ],
-                        Text(
-                          label,
-                          style: ShayaTextStyles.title.copyWith(fontSize: 14),
-                        ),
+                        Text(label, style: ShayaTextStyles.button),
                       ],
                     ),
             ),
@@ -73,23 +85,14 @@ class SecondaryOutlineButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: icon == null
-            ? const SizedBox.shrink()
-            : Icon(icon, size: 18, color: kBodyText),
-        label: Text(label, style: ShayaTextStyles.body),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFF9B4DCA)),
-          foregroundColor: kBodyText,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
+    final button = icon == null
+        ? OutlinedButton(onPressed: onPressed, child: Text(label))
+        : OutlinedButton.icon(
+            onPressed: onPressed,
+            icon: Icon(icon, size: 18, color: Colors.white),
+            label: Text(label),
+          );
+    return SizedBox(height: 50, child: button);
   }
 }
 
@@ -106,17 +109,20 @@ class DangerOutlineButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44,
+      height: 50,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: kDanger),
           foregroundColor: kDanger,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
-        child: Text(label),
+        child: Text(
+          label,
+          style: ShayaTextStyles.body.copyWith(color: kDanger),
+        ),
       ),
     );
   }
